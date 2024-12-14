@@ -1,35 +1,42 @@
-import '@nomiclabs/hardhat-etherscan';
+import '@nomicfoundation/hardhat-verify';
 import '@nomiclabs/hardhat-waffle';
 import '@typechain/hardhat';
 import 'hardhat-gas-reporter';
 import 'solidity-coverage';
+
+import fs from 'node:fs';
 
 import dotenv from 'dotenv';
 import { HardhatUserConfig, task } from 'hardhat/config';
 
 dotenv.config();
 
-// This is a sample Hardhat task. To learn how to create your own go to
-// https://hardhat.org/guides/create-task.html
-task('accounts', 'Prints the list of accounts', async (_args, hre) => {
-  const accounts = await hre.ethers.getSigners();
+let accounts: any = process.env.MNEMONIC
+  ? { mnemonic: process.env.MNEMONIC }
+  : null;
+accounts ??= process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : null;
 
-  for (const account of accounts) {
-    console.log(account.address);
+if (!accounts) {
+  const mnemonicFile = 'mnemonic.txt';
+  if (fs.existsSync(mnemonicFile)) {
+    accounts = {
+      mnemonic: fs.readFileSync(mnemonicFile).toString().trim(),
+    };
   }
-});
+}
 
-if (!process.env.PRIVATE_KEY && !process.env.MNEMONIC) {
+if (!accounts) {
   console.error('invalid env variable: PRIVATE_KEY or MNEMONIC');
   process.exit(1);
 }
 
-const accounts = process.env.MNEMONIC
-  ? { mnemonic: process.env.MNEMONIC }
-  : [process.env.PRIVATE_KEY!];
+task('accounts', 'Prints the list of accounts', async (_args, hre) => {
+  const accounts = await hre.ethers.getSigners();
 
-// You need to export an object to set up your config
-// Go to https://hardhat.org/config/ to learn more
+  for (const account of accounts) {
+    console.info(account.address);
+  }
+});
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -39,7 +46,7 @@ const config: HardhatUserConfig = {
         settings: {
           optimizer: {
             enabled: true,
-            runs: 1000000,
+            runs: 1_000_000,
           },
         },
       },
@@ -48,6 +55,10 @@ const config: HardhatUserConfig = {
   networks: {
     optimism: {
       url: 'https://mainnet.optimism.io',
+      accounts,
+    },
+    opSepolia: {
+      url: 'https://sepolia.optimism.io',
       accounts,
     },
     gnosis: {
@@ -78,6 +89,7 @@ const config: HardhatUserConfig = {
   etherscan: {
     apiKey: {
       optimisticEthereum: process.env.OPTIMISTIC_ETHERSCAN_API_KEY!,
+      opSepolia: process.env.OPTIMISTIC_ETHERSCAN_API_KEY!,
       polygon: process.env.POLYGONSCAN_API_KEY!,
       gnosis: process.env.GNOSISSCAN_API_KEY!,
       arbitrumOne: process.env.ARBISCAN_API_KEY!,
@@ -91,6 +103,14 @@ const config: HardhatUserConfig = {
         urls: {
           apiURL: 'https://api-holesky.etherscan.io/api',
           browserURL: 'https://holesky.etherscan.io',
+        },
+      },
+      {
+        network: 'opSepolia',
+        chainId: 11155420,
+        urls: {
+          apiURL: 'https://api-sepolia-optimistic.etherscan.io/api',
+          browserURL: 'https://sepolia-optimistic.etherscan.io',
         },
       },
     ],

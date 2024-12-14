@@ -10,16 +10,18 @@ export const NETWORK_NAME: Record<number, string> = {
   11155111: 'Sepolia Testnet',
   17000: 'Holesky Testnet',
   31337: 'Hardhat Chain',
+  11155420: 'Optimistic Sepolia Testnet',
 };
 
 export const NETWORK_CURRENCY: Record<number, string> = {
-  10: 'ETH',
+  10: 'OETH',
   100: 'xDAI',
   137: 'MATIC',
   42161: 'ETH',
   11155111: 'SepoliaETH',
   17000: 'HoleskyETH',
   31337: 'HardhatETH',
+  11155420: 'OETH',
 };
 
 export type DeploymentInfo = {
@@ -37,6 +39,7 @@ export const TREASURY_ADDRESS: Record<string, string> = {
   42161: '0x19a8eb80c1483CEAA1278B16C5D5eF0104F85905', // dan13.eth
   17000: '0x19a8eb80c1483CEAA1278B16C5D5eF0104F85905', // dan13.eth
   11155111: '0x19a8eb80c1483CEAA1278B16C5D5eF0104F85905', // dan13.eth
+  11155420: '0xEb4E3e9fA819E69e5Df4ea35b9C7973062C96de9', // dys.metagame.wtf
   31337: '0xffffffffffffffffffffffffffffffffffffffff',
 };
 
@@ -47,10 +50,11 @@ export const PAYMENT_TOKEN: Record<string, string> = {
   42161: '0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8', // USDC
   31337: '0xffffffffffffffffffffffffffffffffffffffff',
   11155111: '0x57B9f2c192BBfa5CAbc79A683435990FEa665861', // TOKEN
+  11155420: '0x62c021e584702C40D0c14923ba6934791a8DaaD3', // OP
   17000: '0x59730da9b5f93fe1e1fd7d62f94b787ecc7feef1', // TOKEN
 };
 
-// export const DEFAULT_UPGRADE_FEE = 10000000; // 10 USDC with 6 decimals
+// export const DEFAULT_UPGRADE_FEE = 10000000 // 10 USDC with 6 decimals
 export const DEFAULT_UPGRADE_FEE = 0;
 
 export type SetupValues = {
@@ -64,13 +68,13 @@ export const validateSetup = async (): Promise<SetupValues> => {
   const [deployer] = await ethers.getSigners();
   const address = await deployer.getAddress();
   if (!deployer.provider) {
-    throw new Error('Provider not found for network');
+    throw new Error('Provider not found for network.');
   }
   const { chainId } = await deployer.provider.getNetwork();
   console.log('Chain ID:', chainId);
   console.log('Network:', NETWORK_NAME[chainId]);
   if (!Object.keys(NETWORK_NAME).includes(chainId.toString())) {
-    throw new Error('Unsupported network');
+    throw new Error('Unsupported network.');
   }
   console.log('Account Address:', address);
   const balance = await deployer.provider.getBalance(address);

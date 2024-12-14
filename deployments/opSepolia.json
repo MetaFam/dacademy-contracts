@@ -1,0 +1,9 @@
+{
+  "network": "opSepolia",
+  "version": "dfd1f61",
+  "factory": "0x1778283e7198ad5b6C631fCb879e5a92426EFD1c",
+  "token": "0xFbd3E23E0662f50f7549d9c193267Dc6c8B4d56A",
+  "template": "0x88a7A302663BBddDDE04b4819E7995845FFae35c",
+  "txHash": "0x676021ab9503009e1ff8893d653a58c3eb56f2318dda746f237e37104163f694",
+  "blockNumber": "21203426"
+}
