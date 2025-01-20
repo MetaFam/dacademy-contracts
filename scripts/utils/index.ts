@@ -73,7 +73,11 @@ export const validateSetup = async (): Promise<SetupValues> => {
   const { chainId } = await deployer.provider.getNetwork();
   console.log('Chain ID:', chainId);
   console.log('Network:', NETWORK_NAME[chainId]);
-  console.log('JSON-RPC:', deployer.provider.connection.url);
+  console.log(
+    'JSON-RPC:',
+    (deployer.provider as unknown as { connection: { url: string } }).connection
+      .url,
+  );
   if (!Object.keys(NETWORK_NAME).includes(chainId.toString())) {
     throw new Error('Unsupported network.');
   }

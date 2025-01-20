@@ -358,7 +358,7 @@ contract QuestChain is
             );
             if (
                 !atLeastOnePassed &&
-                // Checks if at least one quest passed.
+                // At least one quest completed and reviewed.
                 _questStatus[_msgSender()][_questId] == Status.pass
             ) atLeastOnePassed = true;
         }
