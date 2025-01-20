@@ -32,9 +32,11 @@ if (!accounts) {
 
 task('accounts', 'Prints the list of accounts', async (_args, hre) => {
   const accounts = await hre.ethers.getSigners();
+  const provider = hre.ethers.provider;
 
-  for (const account of accounts) {
-    console.info(account.address);
+  for (const { address } of accounts) {
+    const balance = await provider.getBalance(address);
+    console.info(`${address}: ${balance}`);
   }
 });
 
@@ -53,6 +55,10 @@ const config: HardhatUserConfig = {
     ],
   },
   networks: {
+    locahost: {
+      url: 'http://localhost:8545',
+      accounts,
+    },
     optimism: {
       url: 'https://mainnet.optimism.io',
       accounts,
