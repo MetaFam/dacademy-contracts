@@ -35,11 +35,14 @@ contract QuestChain is
     /********************************
      * STATE VARIABLES
      *******************************/
-    bool public premium;
+    // bool public premium;
     IQuestChainFactory public factory;
     IQuestChainToken public token;
     uint256 public chainId;
     uint256 public questCount;
+
+    address public creator;
+    uint256 public length;
 
     // address public limiterContract;
 
@@ -81,6 +84,8 @@ contract QuestChain is
     function init(
         QuestChainCommons.QuestChainInfo calldata _info
     ) external initializer {
+        creator = _msgSender();
+
         factory = IQuestChainFactory(_msgSender());
         token = IQuestChainToken(factory.chainToken());
         chainId = factory.chainCount();
@@ -93,36 +98,36 @@ contract QuestChain is
 
         require(_info.owners.length > 0, "QuestChain: no owners");
 
-        for (uint256 i = _info.owners.length - 1; i >= 0; ) {
-            grantRole(OWNER_ROLE, _info.owners[i]);
+        for(uint256 i = 0; i < _info.owners.length; ) {
+            _cascadeGrantRole(OWNER_ROLE, _info.owners[i]);
             unchecked {
-                --i;
+                ++i;
             }
         }
 
-        for (uint256 i = _info.admins.length - 1; i >= 0; ) {
-            grantRole(ADMIN_ROLE, _info.admins[i]);
+        for(uint256 i = 0; i < _info.admins.length; ) {
+            _cascadeGrantRole(ADMIN_ROLE, _info.admins[i]);
             unchecked {
-                --i;
+                ++i;
             }
         }
 
-        for (uint256 i = _info.editors.length - 1; i >= 0; ) {
-            grantRole(EDITOR_ROLE, _info.editors[i]);
+        for(uint256 i = 0; i < _info.editors.length; ) {
+            _cascadeGrantRole(EDITOR_ROLE, _info.editors[i]);
             unchecked {
-                --i;
+                ++i;
             }
         }
 
-        for (uint256 i = _info.reviewers.length - 1; i >= 0; ) {
-            grantRole(REVIEWER_ROLE, _info.reviewers[i]);
+        for(uint256 i = 0; i < _info.reviewers.length; ) {
+            _cascadeGrantRole(REVIEWER_ROLE, _info.reviewers[i]);
             unchecked {
-                --i;
+                ++i;
             }
         }
 
         questCount = questCount + _info.quests.length;
-        if (_info.paused) {
+        if(_info.paused) {
             _pause();
         }
 
@@ -150,17 +155,6 @@ contract QuestChain is
     function edit(string calldata _details) external onlyRole(ADMIN_ROLE) {
         emit QuestChainEdited(_msgSender(), _details);
     }
-
-    // /**
-    //  * @notice Admin can decide to add a limiter
-    //  * @param _limiterContract address of limiter
-    //  */
-    // function setLimiter(
-    //     address _limiterContract
-    // ) external onlyRole(ADMIN_ROLE) onlyPremium {
-    //     limiterContract = _limiterContract;
-    //     emit SetLimiter(_limiterContract);
-    // }
 
     /**
      * @dev Creates quests in quest chain
@@ -192,10 +186,10 @@ contract QuestChain is
             "QuestChain: list length mismatch"
         );
 
-        for (uint256 i = _loopLength - 1; i >= 0; ) {
+        for(uint256 i = 0; i < _loopLength; ) {
             require(_idList[i] < questCount, "QuestChain: quest not found");
             unchecked {
-                --i;
+                ++i;
             }
         }
 
@@ -215,7 +209,7 @@ contract QuestChain is
             "QuestChain: list length mismatch"
         );
 
-        for (uint256 i = _loopLength - 1; i >= 0; ) {
+        for (uint256 i = 0; i < _loopLength; ) {
             // Check if quest is valid
             require(_idList[i] < questCount, "QuestChain: quest not found");
 
@@ -226,7 +220,7 @@ contract QuestChain is
             );
 
             unchecked {
-                --i;
+                ++i;
             }
         }
 
@@ -242,13 +236,6 @@ contract QuestChain is
         uint256[] calldata _idList,
         string[] calldata _proofList
     ) external whenNotPaused {
-        // if (limiterContract != address(0)) {
-        //     ILimiter(limiterContract).submitProofLimiter(
-        //         _msgSender(),
-        //         _idList
-        //     );
-        // }
-
         uint256 _loopLength = _idList.length;
 
         require(
@@ -256,10 +243,10 @@ contract QuestChain is
             "QuestChain: list length mismatch"
         );
 
-        for (uint256 i = _loopLength - 1; i >= 0; ) {
+        for (uint256 i = 0; i < _loopLength; ) {
             _submitProof(_idList[i]);
             unchecked {
-                --i;
+                ++i;
             }
         }
 
@@ -360,18 +347,30 @@ contract QuestChain is
         bytes32 _role,
         address _account
     ) public override onlyRole(getRoleAdmin(_role)) {
+        _cascadeGrantRole(_role, _account);
+    }
+
+    /**
+     * @dev Grants cascading roles to user
+     * @param _role role to be granted
+     * @param _account address of the user
+     */
+    function _cascadeGrantRole(
+        bytes32 _role,
+        address _account
+    ) internal {
         _grantRole(_role, _account);
-        if (_role == OWNER_ROLE) {
-            grantRole(ADMIN_ROLE, _account);
-        } else if (_role == ADMIN_ROLE) {
-            grantRole(EDITOR_ROLE, _account);
-        } else if (_role == EDITOR_ROLE) {
-            grantRole(REVIEWER_ROLE, _account);
+        if(_role == OWNER_ROLE) {
+            _cascadeGrantRole(ADMIN_ROLE, _account);
+        } else if(_role == ADMIN_ROLE) {
+            _cascadeGrantRole(EDITOR_ROLE, _account);
+        } else if(_role == EDITOR_ROLE) {
+            _cascadeGrantRole(REVIEWER_ROLE, _account);
         }
     }
 
     /**
-     * @dev Revokes cascading roles from user. *Broken*; order should be reversed.
+     * @dev Revokes cascading roles from user
      * @param _role role to be revoked
      * @param _account address of the user
      */

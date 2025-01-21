@@ -38,7 +38,7 @@ contract Shelf is
         for (uint256 i = _info.admins.length - 1; i >= 0; ) {
             _grantRole(ADMIN_ROLE, _info.admins[i]);
             unchecked {
-                i--;
+                --i;
             }
         }
 
