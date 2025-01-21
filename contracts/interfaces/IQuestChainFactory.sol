@@ -26,7 +26,7 @@ interface IQuestChainFactory {
     function createChain(
         QuestChainCommons.QuestChainInfo calldata _info,
         bytes32 _salt
-    ) external returns (address);
+    ) external returns (IQuestChain);
 
     // function createAndUpgrade(
     //     QuestChainCommons.QuestChainInfo calldata _info,

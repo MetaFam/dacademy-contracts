@@ -35,11 +35,13 @@ contract QuestChain is
     /********************************
      * STATE VARIABLES
      *******************************/
-    bool public premium;
+    // bool public premium;
     IQuestChainFactory public factory;
     IQuestChainToken public token;
     uint256 public chainId;
     uint256 public questCount;
+
+    address public creator;
 
     // address public limiterContract;
 
@@ -81,6 +83,8 @@ contract QuestChain is
     function init(
         QuestChainCommons.QuestChainInfo calldata _info
     ) external initializer {
+        creator = _msgSender();
+
         factory = IQuestChainFactory(_msgSender());
         token = IQuestChainToken(factory.chainToken());
         chainId = factory.chainCount();
@@ -92,8 +96,6 @@ contract QuestChain is
         _setTokenURI(_info.tokenURI);
 
         require(_info.owners.length > 0, "QuestChain: no owners");
-
-        cascadeGrantRole(OWNER_ROLE, _msgSender());
 
         for (uint256 i = _info.owners.length - 1; i >= 0; ) {
             cascadeGrantRole(OWNER_ROLE, _info.owners[i]);

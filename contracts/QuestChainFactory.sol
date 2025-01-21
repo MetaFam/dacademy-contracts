@@ -243,7 +243,7 @@ contract QuestChainFactory is IQuestChainFactory, ReentrancyGuard {
     function createChain(
         QuestChainCommons.QuestChainInfo calldata _info,
         bytes32 _salt
-    ) external returns (address) {
+    ) external returns (IQuestChain) {
         return _createChain(_info, _salt);
     }
 
