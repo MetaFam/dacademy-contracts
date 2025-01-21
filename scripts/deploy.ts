@@ -3,7 +3,7 @@ import fs from 'node:fs';
 
 import { ethers, network, run } from 'hardhat';
 
-import { QuestChain, QuestChainFactory } from '../types';
+import { QuestChainFactory } from '../types';
 import {
   DEFAULT_UPGRADE_FEE,
   NETWORK_CURRENCY,
@@ -19,12 +19,12 @@ async function main() {
     encoding: 'utf-8',
   }).trim();
 
-  if (TREASURY_ADDRESS[chainId] == null) {
-    throw new Error('`TREASURY_ADDRESS` not found.');
-  }
-  if (PAYMENT_TOKEN[chainId] == null) {
-    throw new Error('`PAYMENT_TOKEN` not found.');
-  }
+  // if (TREASURY_ADDRESS[chainId] == null) {
+  //   throw new Error('`TREASURY_ADDRESS` not found.')
+  // }
+  // if (PAYMENT_TOKEN[chainId] == null) {
+  //   throw new Error('`PAYMENT_TOKEN` not found.')
+  // }
   if (!deployer.provider) {
     throw new Error('Provider not found for network.');
   }
@@ -33,30 +33,34 @@ async function main() {
   console.info('`git` Commit Hash:', commitHash);
 
   const QuestChain = await ethers.getContractFactory('QuestChain');
-  const questChain = (await QuestChain.deploy()) as QuestChain;
-  await questChain.deployed();
-  console.info('Template Address:', questChain.address);
+  const Shelf = await ethers.getContractFactory('Shelf');
+  const chain = await QuestChain.deploy();
+  const shelf = await Shelf.deploy();
+  await Promise.all([chain.deployed(), shelf.deployed()]);
+  console.info('Chain Template Address:', chain.address);
+  console.info('Shelf Template Address:', shelf.address);
 
   const QuestChainFactory = await ethers.getContractFactory(
     'QuestChainFactory',
   );
   const factoryArgs = [
-    questChain.address,
+    // chain.address,
+    // shelf.address,
     address,
-    TREASURY_ADDRESS[chainId],
-    PAYMENT_TOKEN[chainId],
-    DEFAULT_UPGRADE_FEE,
+    // TREASURY_ADDRESS[chainId],
+    // PAYMENT_TOKEN[chainId],
+    // DEFAULT_UPGRADE_FEE,
   ];
-  const questChainFactory = (await QuestChainFactory.deploy(
+  const factory = (await QuestChainFactory.deploy(
     ...factoryArgs,
   )) as QuestChainFactory;
-  await questChainFactory.deployed();
-  console.info('Factory Address:', questChainFactory.address);
+  await factory.deployed();
+  console.info('Factory Address:', factory.address);
 
-  const questChainTokenAddress = await questChainFactory.questChainToken();
+  const questChainTokenAddress = await factory.chainToken();
   console.info('Token Address:', questChainTokenAddress);
 
-  const txHash = questChainFactory.deployTransaction.hash;
+  const txHash = factory.deployTransaction.hash;
   console.info('Transaction Hash:', txHash);
 
   const receipt = await deployer.provider.getTransactionReceipt(txHash);
@@ -86,28 +90,28 @@ async function main() {
     const deploymentInfo = {
       network: network.name,
       version: commitHash,
-      factory: questChainFactory.address,
+      factory: factory.address,
       token: questChainTokenAddress,
-      template: questChain.address,
+      template: await factory.chainTemplate(),
       txHash,
       blockNumber: receipt.blockNumber.toString(),
     };
 
     const outFile = `deployments/${network.name}.json`;
-    fs.writeFileSync(outFile, JSON.stringify(deploymentInfo, undefined, 2));
+    fs.writeFileSync(outFile, JSON.stringify(deploymentInfo, null, 2));
     console.info('Wrote Deployment Info:', outFile);
 
     console.debug('Waiting for contracts to be indexed…');
-    await questChainFactory.deployTransaction.wait(10);
+    await factory.deployTransaction.wait(10);
 
     console.debug('Verifying Contracts…');
     await run('verify:verify', {
-      address: questChain.address,
+      address: await factory.chainTemplate(),
       constructorArguments: [],
     });
 
     await run('verify:verify', {
-      address: questChainFactory.address,
+      address: factory.address,
       constructorArguments: factoryArgs,
     });
 

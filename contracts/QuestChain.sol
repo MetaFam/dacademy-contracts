@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 
-pragma solidity 0.8.16;
+pragma solidity ^0.8.0;
 
 //   ╔═╗ ┬ ┬┌─┐┌─┐┌┬┐╔═╗┬ ┬┌─┐┬┌┐┌┌─┐
 //   ║═╬╗│ │├┤ └─┐ │ ║  ├─┤├─┤││││└─┐
@@ -15,7 +15,7 @@ import "@openzeppelin/contracts/utils/Context.sol";
 import "./interfaces/IQuestChain.sol";
 import "./interfaces/ILimiter.sol";
 
-/// @author @dan13ram, @parv3213
+/// @author @dan13ram, @parv3213, @dysbulic, @Omka
 contract QuestChain is
     IQuestChain,
     ReentrancyGuard,
@@ -24,65 +24,53 @@ contract QuestChain is
     AccessControl
 {
     /********************************
-     CONSTANT VARIABLES
+     * CONSTANT VARIABLES
      *******************************/
 
-    // role key for the admin role
+    bytes32 public constant OWNER_ROLE = DEFAULT_ADMIN_ROLE;
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
-    // role key for the editor role
     bytes32 public constant EDITOR_ROLE = keccak256("EDITOR_ROLE");
-    // role key for the reviewer role
     bytes32 public constant REVIEWER_ROLE = keccak256("REVIEWER_ROLE");
 
     /********************************
-     STATE VARIABLES
+     * STATE VARIABLES
      *******************************/
-    // quest chain upgrade status
     bool public premium;
-    // instantiate factory interface
-    IQuestChainFactory public questChainFactory;
-    // instantiate token interface
-    IQuestChainToken public questChainToken;
-    // identifier for quest chain and corresponding token
-    uint256 public questChainId;
-    // counter for all quests
+    IQuestChainFactory public factory;
+    IQuestChainToken public token;
+    uint256 public chainId;
     uint256 public questCount;
 
-    // address of limiter, if any.
-    address public limiterContract;
+    // address public limiterContract;
 
     /********************************
-     MAPPING STRUCTS EVENTS MODIFIER
+     * MAPPING STRUCTS EVENTS MODIFIER
      *******************************/
 
     mapping(uint256 => QuestDetails) public questDetails;
-    // quest completion status for each quest for each user account
     mapping(address => mapping(uint256 => Status)) private _questStatus;
 
     /**
-     * @dev Access control modifier for functions callable by factory contract only
+     * @dev Callable by factory contract only
      */
     modifier onlyFactory() {
-        require(
-            _msgSender() == address(questChainFactory),
-            "QuestChain: not factory"
-        );
+        require(_msgSender() == address(factory), "QuestChain: not factory");
         _;
     }
 
-    /**
-     * @dev Modifier for functions which are supported only for premium quest chains
-     */
-    modifier onlyPremium() {
-        require(premium, "QuestChain: not premium");
-        _;
-    }
+    // /**
+    //  * @dev Functions which are supported only for premium quest chains
+    //  */
+    // modifier onlyPremium() {
+    //     require(premium, "QuestChain: not premium");
+    //     _;
+    // }
 
     /**
      * @dev Modifier to make a function callable only when the quest is valid
      */
-    modifier validQuest(uint256 _questId) {
-        require(_questId < questCount, "QuestChain: quest not found");
+    modifier validQuest(uint256 _id) {
+        require(_id < questCount, "QuestChain: quest not found");
         _;
     }
 
@@ -93,58 +81,51 @@ contract QuestChain is
     function init(
         QuestChainCommons.QuestChainInfo calldata _info
     ) external initializer {
-        // set factory interface
-        questChainFactory = IQuestChainFactory(_msgSender());
-        // set token interface
-        questChainToken = IQuestChainToken(questChainFactory.questChainToken());
-        // set quest chain / token Id
-        questChainId = questChainFactory.questChainCount();
+        factory = IQuestChainFactory(_msgSender());
+        token = IQuestChainToken(factory.chainToken());
+        chainId = factory.chainCount();
 
-        // set role admins
-        _setRoleAdmin(ADMIN_ROLE, DEFAULT_ADMIN_ROLE);
+        _setRoleAdmin(ADMIN_ROLE, OWNER_ROLE);
         _setRoleAdmin(EDITOR_ROLE, ADMIN_ROLE);
         _setRoleAdmin(REVIEWER_ROLE, ADMIN_ROLE);
 
-        // set token uri
         _setTokenURI(_info.tokenURI);
 
-        // cannot have a quest chain without owners
         require(_info.owners.length > 0, "QuestChain: no owners");
 
-        // set roles for owners
-        for (uint256 i = 0; i < _info.owners.length; i = i + 1) {
-            _grantRole(DEFAULT_ADMIN_ROLE, _info.owners[i]);
-            _grantRole(ADMIN_ROLE, _info.owners[i]);
-            _grantRole(EDITOR_ROLE, _info.owners[i]);
-            _grantRole(REVIEWER_ROLE, _info.owners[i]);
+        for (uint256 i = _info.owners.length - 1; i >= 0; ) {
+            grantRole(OWNER_ROLE, _info.owners[i]);
+            unchecked {
+                --i;
+            }
         }
 
-        // set roles for admins
-        for (uint256 i = 0; i < _info.admins.length; i = i + 1) {
-            _grantRole(ADMIN_ROLE, _info.admins[i]);
-            _grantRole(EDITOR_ROLE, _info.admins[i]);
-            _grantRole(REVIEWER_ROLE, _info.admins[i]);
+        for (uint256 i = _info.admins.length - 1; i >= 0; ) {
+            grantRole(ADMIN_ROLE, _info.admins[i]);
+            unchecked {
+                --i;
+            }
         }
 
-        // set roles for editors
-        for (uint256 i = 0; i < _info.editors.length; i = i + 1) {
-            _grantRole(EDITOR_ROLE, _info.editors[i]);
-            _grantRole(REVIEWER_ROLE, _info.editors[i]);
+        for (uint256 i = _info.editors.length - 1; i >= 0; ) {
+            grantRole(EDITOR_ROLE, _info.editors[i]);
+            unchecked {
+                --i;
+            }
         }
 
-        // set roles for reviewers
-        for (uint256 i = 0; i < _info.reviewers.length; i = i + 1) {
-            _grantRole(REVIEWER_ROLE, _info.reviewers[i]);
+        for (uint256 i = _info.reviewers.length - 1; i >= 0; ) {
+            grantRole(REVIEWER_ROLE, _info.reviewers[i]);
+            unchecked {
+                --i;
+            }
         }
 
-        // update quests counter
         questCount = questCount + _info.quests.length;
         if (_info.paused) {
-            // set pause status
             _pause();
         }
 
-        // log initializer data
         emit QuestChainInit(_info.details, _info.quests, _info.paused);
     }
 
@@ -167,20 +148,19 @@ contract QuestChain is
      * @param _details uri of off chain details for quest chain
      */
     function edit(string calldata _details) external onlyRole(ADMIN_ROLE) {
-        // log edited quest chain data
         emit QuestChainEdited(_msgSender(), _details);
     }
 
-    /**
-     * @notice Admin can decide to add a limiter
-     * @param _limiterContract address of limiter
-     */
-    function setLimiter(
-        address _limiterContract
-    ) external onlyRole(ADMIN_ROLE) onlyPremium {
-        limiterContract = _limiterContract;
-        emit SetLimiter(_limiterContract);
-    }
+    // /**
+    //  * @notice Admin can decide to add a limiter
+    //  * @param _limiterContract address of limiter
+    //  */
+    // function setLimiter(
+    //     address _limiterContract
+    // ) external onlyRole(ADMIN_ROLE) onlyPremium {
+    //     limiterContract = _limiterContract;
+    //     emit SetLimiter(_limiterContract);
+    // }
 
     /**
      * @dev Creates quests in quest chain
@@ -189,209 +169,186 @@ contract QuestChain is
     function createQuests(
         string[] calldata _detailsList
     ) external onlyRole(EDITOR_ROLE) {
-        // update quest counter
         questCount += _detailsList.length;
 
-        // log  off chain details of quests created
         emit QuestsCreated(_msgSender(), _detailsList);
     }
 
     /**
      * @dev Edits existing quests in quest chain
-     * @param _questIdList list of quest ids of the quests to be edited
+     * @param _idList list of quest ids of the quests to be edited
      * @param _detailsList list of uris of off chain details for each quest
      */
     function editQuests(
-        uint256[] calldata _questIdList,
+        uint256[] calldata _idList,
         string[] calldata _detailsList
     ) external onlyRole(EDITOR_ROLE) {
         // local copy of loop length
-        uint256 _loopLength = _questIdList.length;
+        uint256 _loopLength = _idList.length;
 
         // ensure equal length arrays
         require(
             _loopLength == _detailsList.length,
-            "QuestChain: invalid params"
+            "QuestChain: list length mismatch"
         );
 
-        // ensure each quest is valid
-        for (uint256 i; i < _loopLength; ) {
-            require(
-                _questIdList[i] < questCount,
-                "QuestChain: quest not found"
-            );
+        for (uint256 i = _loopLength - 1; i >= 0; ) {
+            require(_idList[i] < questCount, "QuestChain: quest not found");
             unchecked {
-                ++i;
+                --i;
             }
         }
 
         // log off chain details of quests edited
-        emit QuestsEdited(_msgSender(), _questIdList, _detailsList);
+        emit QuestsEdited(_msgSender(), _idList, _detailsList);
     }
 
-    // TODO add Natspec
     function configureQuests(
-        uint256[] calldata _questIdList,
-        QuestDetails[] calldata _questDetails
+        uint256[] calldata _idList,
+        QuestDetails[] calldata _detailsList
     ) external onlyRole(EDITOR_ROLE) {
-        uint256 _loopLength = _questIdList.length;
+        uint256 _loopLength = _idList.length;
 
         // Check if length of questIdList equals questDetailsList
         require(
-            _loopLength == _questDetails.length,
-            "QuestChain: invalid params"
+            _loopLength == _detailsList.length,
+            "QuestChain: list length mismatch"
         );
 
-        for (uint256 i; i < _loopLength; ) {
+        for (uint256 i = _loopLength - 1; i >= 0; ) {
             // Check if quest is valid
-            require(
-                _questIdList[i] < questCount,
-                "QuestChain: quest not found"
-            );
+            require(_idList[i] < questCount, "QuestChain: quest not found");
 
-            questDetails[_questIdList[i]] = QuestDetails(
-                _questDetails[i].paused,
-                _questDetails[i].optional,
-                _questDetails[i].skipReview
+            questDetails[_idList[i]] = QuestDetails(
+                _detailsList[i].paused,
+                _detailsList[i].optional,
+                _detailsList[i].skipReview
             );
 
             unchecked {
-                ++i;
+                --i;
             }
         }
-        emit ConfiguredQuests(_msgSender(), _questIdList, _questDetails);
+
+        emit ConfiguredQuests(_msgSender(), _idList, _detailsList);
     }
 
     /**
      * @dev Submit proofs for completing particular quests in quest chain
-     * @param _questIdList list of quest ids of the quest submissions
+     * @param _idList list of quest ids of the quest submissions
      * @param _proofList list of off chain proofs for each quest
      */
     function submitProofs(
-        uint256[] calldata _questIdList,
+        uint256[] calldata _idList,
         string[] calldata _proofList
     ) external whenNotPaused {
-        if (limiterContract != address(0)) {
-            ILimiter(limiterContract).submitProofLimiter(
-                _msgSender(),
-                _questIdList
-            );
-        }
+        // if (limiterContract != address(0)) {
+        //     ILimiter(limiterContract).submitProofLimiter(
+        //         _msgSender(),
+        //         _idList
+        //     );
+        // }
 
-        uint256 _loopLength = _questIdList.length;
+        uint256 _loopLength = _idList.length;
 
-        require(_loopLength == _proofList.length, "QuestChain: invalid params");
+        require(
+            _loopLength == _proofList.length,
+            "QuestChain: list length mismatch"
+        );
 
-        for (uint256 i; i < _loopLength; ) {
-            _submitProof(_questIdList[i]);
+        for (uint256 i = _loopLength - 1; i >= 0; ) {
+            _submitProof(_idList[i]);
             unchecked {
-                ++i;
+                --i;
             }
         }
 
-        emit QuestProofsSubmitted(_msgSender(), _questIdList, _proofList);
+        emit QuestProofsSubmitted(_msgSender(), _idList, _proofList);
     }
 
     /**
      * @dev Reviews proofs for proofs previously submitted by questers
      * @param _questerList list of questers whose submissions are being reviewed
-     * @param _questIdList list of quest ids of the quest submissions
+     * @param _idList list of quest ids of the quest submissions
      * @param _successList list of booleans accepting or rejecting submissions
      * @param _detailsList list of off chain comments for each submission
      */
     function reviewProofs(
         address[] calldata _questerList,
-        uint256[] calldata _questIdList,
+        uint256[] calldata _idList,
         bool[] calldata _successList,
         string[] calldata _detailsList
     ) external onlyRole(REVIEWER_ROLE) {
         uint256 _loopLength = _questerList.length;
 
         require(
-            _loopLength == _questIdList.length &&
+            _loopLength == _idList.length &&
                 _loopLength == _successList.length &&
                 _loopLength == _detailsList.length,
             "QuestChain: invalid params"
         );
 
-        for (uint256 i; i < _loopLength; ) {
-            _reviewProof(_questerList[i], _questIdList[i], _successList[i]);
+        for (uint256 i = _loopLength - 1; i >= 0; ) {
+            _reviewProof(_questerList[i], _idList[i], _successList[i]);
             unchecked {
-                ++i;
+                --i;
             }
         }
 
         emit QuestProofsReviewed(
             _msgSender(),
             _questerList,
-            _questIdList,
+            _idList,
             _successList,
             _detailsList
         );
     }
 
     /**
-     * @dev Updates token uri for the quest chain nft
-     * @param _tokenURI off chain token uri
+     * @dev Updates token URI for the quest chain NFT
+     * @param _uri off chain token uri
      */
     function setTokenURI(
-        string memory _tokenURI
-    ) external onlyRole(ADMIN_ROLE) onlyPremium {
-        _setTokenURI(_tokenURI);
+        string memory _uri
+    ) external onlyRole(ADMIN_ROLE) /* onlyPremium */ {
+        _setTokenURI(_uri);
     }
 
     /**
      * @dev Mints NFT to the msg.sender if they have completed all quests
      */
-
     function mintToken() external {
         require(questCount > 0, "QuestChain: no quests found");
+        require(complete(), "QuestChain: not complete");
 
-        bool atLeastOnePassed;
-
-        for (uint256 _questId; _questId < questCount; ++_questId) {
-            require(
-                questDetails[_questId].optional ||
-                    questDetails[_questId].paused ||
-                    _questStatus[_msgSender()][_questId] == Status.pass,
-                "QuestChain: chain incomplete"
-            );
-            if (
-                !atLeastOnePassed &&
-                // At least one quest completed and reviewed.
-                _questStatus[_msgSender()][_questId] == Status.pass
-            ) atLeastOnePassed = true;
-        }
-
-        require(atLeastOnePassed, "QuestChain: no successful review");
-        questChainToken.mint(_msgSender(), questChainId);
+        token.mint(_msgSender(), chainId);
     }
 
     /**
      * @dev Burns NFT from the msg.sender
      */
     function burnToken() external {
-        questChainToken.burn(_msgSender(), questChainId);
+        token.burn(_msgSender(), chainId);
     }
 
-    /**
-     * @dev Upgrades quest chain to premium
-     */
-    function upgrade() external onlyFactory {
-        require(!premium, "QuestChain: already upgraded");
-        premium = true;
-    }
+    // /**
+    //  * @dev Upgrades quest chain to premium
+    //  */
+    // function upgrade() external onlyFactory {
+    //     require(!premium, "QuestChain: already upgraded");
+    //     premium = true;
+    // }
 
     /**
      * @dev Public getter to read status of completion of a quest by a particular quester
      * @param _quester address of quester
-     * @param _questId identifier of the quest
+     * @param _id identifier of the quest
      */
     function questStatus(
         address _quester,
-        uint256 _questId
-    ) external view validQuest(_questId) returns (Status status) {
-        status = _questStatus[_quester][_questId];
+        uint256 _id
+    ) external view validQuest(_id) returns (Status) {
+        return _questStatus[_quester][_id];
     }
 
     /**
@@ -404,7 +361,7 @@ contract QuestChain is
         address _account
     ) public override onlyRole(getRoleAdmin(_role)) {
         _grantRole(_role, _account);
-        if (_role == DEFAULT_ADMIN_ROLE) {
+        if (_role == OWNER_ROLE) {
             grantRole(ADMIN_ROLE, _account);
         } else if (_role == ADMIN_ROLE) {
             grantRole(EDITOR_ROLE, _account);
@@ -414,8 +371,8 @@ contract QuestChain is
     }
 
     /**
-     * @dev Revokes cascading roles from user
-     * @param _role role to be granted
+     * @dev Revokes cascading roles from user. *Broken*; order should be reversed.
+     * @param _role role to be revoked
      * @param _account address of the user
      */
     function revokeRole(
@@ -428,58 +385,108 @@ contract QuestChain is
         } else if (_role == EDITOR_ROLE) {
             revokeRole(ADMIN_ROLE, _account);
         } else if (_role == ADMIN_ROLE) {
-            revokeRole(DEFAULT_ADMIN_ROLE, _account);
+            revokeRole(OWNER_ROLE, _account);
         }
     }
 
     /**
      * @dev Public getter to view quest chain token uri
      */
-    function getTokenURI() public view returns (string memory uri) {
-        uri = questChainToken.uri(questChainId);
+    function getTokenURI() public view returns (string memory) {
+        return token.uri(chainId);
+    }
+
+    /**
+     * @return Whether the sender can mint the NFT
+     */
+    function complete() public view returns (bool) {
+        bool _onePassed;
+
+        for (uint256 _id = questCount - 1; _id >= 0; ) {
+            require(
+                questDetails[_id].optional ||
+                    questDetails[_id].paused ||
+                    _questStatus[_msgSender()][_id] == Status.pass,
+                "QuestChain: chain incomplete"
+            );
+            if (
+                !_onePassed &&
+                // At least one quest completed and reviewed.
+                _questStatus[_msgSender()][_id] == Status.pass
+            ) _onePassed = true;
+            unchecked {
+                --_id;
+            }
+        }
+
+        require(_onePassed, "QuestChain: no approved reviews");
+
+        return true;
     }
 
     /**
      * @dev internal function to update status of quest to review
-     * @param _questId identifier of quest
+     * @param _id identifier of quest
      */
-    function _submitProof(uint256 _questId) internal validQuest(_questId) {
-        require(!questDetails[_questId].paused, "QuestChain: quest paused");
+    function _submitProof(uint256 _id) internal validQuest(_id) {
+        require(!questDetails[_id].paused, "QuestChain: quest paused");
         require(
-            _questStatus[_msgSender()][_questId] != Status.pass,
+            _questStatus[_msgSender()][_id] != Status.pass,
             "QuestChain: already passed"
         );
 
-        questDetails[_questId].skipReview
-            ? _questStatus[_msgSender()][_questId] = Status.pass
-            : _questStatus[_msgSender()][_questId] = Status.review;
+        questDetails[_id].skipReview
+            ? _questStatus[_msgSender()][_id] = Status.pass
+            : _questStatus[_msgSender()][_id] = Status.review;
     }
 
     /**
      * @dev internal function to review quest
      * @param _quester quester address
-     * @param _questId identifier of quest
+     * @param _id identifier of quest
      * @param _success accepting / rejecting proof
      */
     function _reviewProof(
         address _quester,
-        uint256 _questId,
+        uint256 _id,
         bool _success
-    ) internal validQuest(_questId) {
+    ) internal validQuest(_id) {
         require(
-            _questStatus[_quester][_questId] == Status.review,
+            _questStatus[_quester][_id] == Status.review,
             "QuestChain: quest not in review"
         );
 
-        _questStatus[_quester][_questId] = _success ? Status.pass : Status.fail;
+        _questStatus[_quester][_id] = _success ? Status.pass : Status.fail;
     }
 
     /**
      * @dev internal function to update token uri
-     * @param _tokenURI off chain token uri
+     * @param _uri off chain token uri
      */
-    function _setTokenURI(string memory _tokenURI) internal {
-        questChainToken.setTokenURI(questChainId, _tokenURI);
-        emit QuestChainTokenURIUpdated(_tokenURI);
+    function _setTokenURI(string memory _uri) internal {
+        token.setTokenURI(chainId, _uri);
+        emit QuestChainTokenURIUpdated(_uri);
+    }
+
+    function questChainFactory()
+        external
+        view
+        override
+        returns (IQuestChainFactory)
+    {
+        return factory;
+    }
+
+    function questChainToken()
+        external
+        view
+        override
+        returns (IQuestChainToken)
+    {
+        return token;
+    }
+
+    function questChainId() external view override returns (uint256) {
+        return chainId;
     }
 }

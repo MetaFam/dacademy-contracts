@@ -11,7 +11,7 @@ Unifying the function calls used within the PWN context (not having to worry abo
 Read more: https://github.com/PWNFinance/MultiToken
 
 */
-pragma solidity 0.8.16;
+pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";

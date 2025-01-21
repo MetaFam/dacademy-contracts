@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 
-pragma solidity 0.8.16;
+pragma solidity ^0.8.0;
 
 //   ╔═╗ ┬ ┬┌─┐┌─┐┌┬┐╔═╗┬ ┬┌─┐┬┌┐┌┌─┐
 //   ║═╬╗│ │├┤ └─┐ │ ║  ├─┤├─┤││││└─┐
@@ -18,7 +18,6 @@ interface IQuestChain {
     }
 
     struct QuestDetails {
-        // pause status for each quest
         bool paused;
         bool optional;
         bool skipReview;
@@ -86,7 +85,9 @@ interface IQuestChain {
 
     function burnToken() external;
 
-    function upgrade() external;
+    // function upgrade() external;
+
+    function complete() external view returns (bool);
 
     function questChainFactory() external view returns (IQuestChainFactory);
 

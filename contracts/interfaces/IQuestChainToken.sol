@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 
-pragma solidity 0.8.16;
+pragma solidity ^0.8.0;
 
 //   ╔═╗ ┬ ┬┌─┐┌─┐┌┬┐╔═╗┬ ┬┌─┐┬┌┐┌┌─┐
 //   ║═╬╗│ │├┤ └─┐ │ ║  ├─┤├─┤││││└─┐
 //   ╚═╝╚└─┘└─┘└─┘ ┴ ╚═╝┴ ┴┴ ┴┴┘└┘└─┘
 
-import "./IQuestChainFactory.sol";
 import "@openzeppelin/contracts/token/ERC1155/extensions/IERC1155MetadataURI.sol";
+
+import "./IQuestChainFactory.sol";
 
 interface IQuestChainToken is IERC1155MetadataURI {
     function setTokenOwner(uint256 _tokenId, address _questChain) external;
