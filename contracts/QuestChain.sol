@@ -35,13 +35,11 @@ contract QuestChain is
     /********************************
      * STATE VARIABLES
      *******************************/
-    // bool public premium;
+    bool public premium;
     IQuestChainFactory public factory;
     IQuestChainToken public token;
     uint256 public chainId;
     uint256 public questCount;
-
-    address public creator;
 
     // address public limiterContract;
 
@@ -83,8 +81,6 @@ contract QuestChain is
     function init(
         QuestChainCommons.QuestChainInfo calldata _info
     ) external initializer {
-        creator = _msgSender();
-
         factory = IQuestChainFactory(_msgSender());
         token = IQuestChainToken(factory.chainToken());
         chainId = factory.chainCount();
@@ -98,28 +94,28 @@ contract QuestChain is
         require(_info.owners.length > 0, "QuestChain: no owners");
 
         for (uint256 i = _info.owners.length - 1; i >= 0; ) {
-            cascadeGrantRole(OWNER_ROLE, _info.owners[i]);
+            grantRole(OWNER_ROLE, _info.owners[i]);
             unchecked {
                 --i;
             }
         }
 
         for (uint256 i = _info.admins.length - 1; i >= 0; ) {
-            cascadeGrantRole(ADMIN_ROLE, _info.admins[i]);
+            grantRole(ADMIN_ROLE, _info.admins[i]);
             unchecked {
                 --i;
             }
         }
 
         for (uint256 i = _info.editors.length - 1; i >= 0; ) {
-            cascadeGrantRole(EDITOR_ROLE, _info.editors[i]);
+            grantRole(EDITOR_ROLE, _info.editors[i]);
             unchecked {
                 --i;
             }
         }
 
         for (uint256 i = _info.reviewers.length - 1; i >= 0; ) {
-            cascadeGrantRole(REVIEWER_ROLE, _info.reviewers[i]);
+            grantRole(REVIEWER_ROLE, _info.reviewers[i]);
             unchecked {
                 --i;
             }
@@ -360,17 +356,17 @@ contract QuestChain is
      * @param _role role to be granted
      * @param _account address of the user
      */
-    function cascadeGrantRole(
+    function grantRole(
         bytes32 _role,
         address _account
-    ) public onlyRole(getRoleAdmin(_role)) {
+    ) public override onlyRole(getRoleAdmin(_role)) {
         _grantRole(_role, _account);
         if (_role == OWNER_ROLE) {
-            cascadeGrantRole(ADMIN_ROLE, _account);
+            grantRole(ADMIN_ROLE, _account);
         } else if (_role == ADMIN_ROLE) {
-            cascadeGrantRole(EDITOR_ROLE, _account);
+            grantRole(EDITOR_ROLE, _account);
         } else if (_role == EDITOR_ROLE) {
-            cascadeGrantRole(REVIEWER_ROLE, _account);
+            grantRole(REVIEWER_ROLE, _account);
         }
     }
 

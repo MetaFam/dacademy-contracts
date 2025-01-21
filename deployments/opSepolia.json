@@ -1,9 +1,9 @@
 {
   "network": "opSepolia",
-  "version": "e5939eb",
-  "factory": "0x28ca2Bc160Dcd246d2b49dC105B9FEe3A6583485",
-  "token": "0x6a23d49953527884a412a21Ab74ce741E0c2359e",
-  "template": "0x848B7abec525173310CBC8d9F503BF5f928B1f7f",
-  "txHash": "0x4b4b34bdeabf3d991209924f994e8317bb9a44372702610feee0bcd4921cb34d",
-  "blockNumber": "22809976"
+  "version": "33f9a02",
+  "factory": "0xc14618D5Ec51FDa2Bc227B9dB65CFE1E8C0d4E30",
+  "token": "0x40801118A3e129bc269c797cF7B6e2dE6AF76508",
+  "template": "0xd11149f84e39ceFa3b3f869791c5bed9d08640A5",
+  "txHash": "0x823f349bfbe3662617458a9ba06c2497a70c7d3c10e456521c938a8f557fd025",
+  "blockNumber": "22808341"
 }

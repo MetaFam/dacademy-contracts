@@ -53,7 +53,7 @@ contract QuestChainFactory is IQuestChainFactory, ReentrancyGuard {
      * MAPPING STRUCTS EVENTS MODIFIER
      *******************************/
 
-    mapping(uint256 => IQuestChain) private _chains;
+    mapping(uint256 => address) private _chains;
 
     /**
      * @dev Callable by admin only
@@ -243,7 +243,7 @@ contract QuestChainFactory is IQuestChainFactory, ReentrancyGuard {
     function createChain(
         QuestChainCommons.QuestChainInfo calldata _info,
         bytes32 _salt
-    ) external returns (IQuestChain) {
+    ) external returns (address) {
         return _createChain(_info, _salt);
     }
 
@@ -314,7 +314,9 @@ contract QuestChainFactory is IQuestChainFactory, ReentrancyGuard {
      * @dev Returns the address of a deployed quest chain proxy
      * @param _index the quest chain contract index
      */
-    function getQuestChain(uint256 _index) external view returns (IQuestChain) {
+    function getQuestChainAddress(
+        uint256 _index
+    ) external view returns (address) {
         return _chains[_index];
     }
 
@@ -334,8 +336,6 @@ contract QuestChainFactory is IQuestChainFactory, ReentrancyGuard {
         }
     }
 
-    event GotHere();
-
     /**
      * @dev Internal function deploys and initializes a new quest chain minimal proxy
      * @param _info the initialization data struct for our new clone
@@ -344,21 +344,18 @@ contract QuestChainFactory is IQuestChainFactory, ReentrancyGuard {
     function _createChain(
         QuestChainCommons.QuestChainInfo calldata _info,
         bytes32 _salt
-    ) internal returns (IQuestChain _chain) {
-        _chain = _newChain(_salt);
-        emit GotHere();
-        _setupQuestChain(_chain, _info);
+    ) internal returns (address _chainAddress) {
+        _chainAddress = _newChain(_salt);
+
+        _setupQuestChain(_chainAddress, _info);
     }
 
     /**
      * @dev Internal function deploys a new quest chain minimal proxy
      * @param _salt a nonce
      */
-    function _newChain(bytes32 _salt) internal returns (IQuestChain) {
-        address clone = (
-            Clones.cloneDeterministic(address(_chainTemplate), _salt)
-        );
-        return IQuestChain(clone);
+    function _newChain(bytes32 _salt) internal returns (address) {
+        return Clones.cloneDeterministic(address(_chainTemplate), _salt);
     }
 
     /**
@@ -371,18 +368,18 @@ contract QuestChainFactory is IQuestChainFactory, ReentrancyGuard {
 
     /**
      * @dev Internal function initializes a new quest chain minimal proxy
-     * @param _chain the new minimal proxy's address
+     * @param _chainAddress the new minimal proxy's address
      * @param _info the initialization parameters
      */
     function _setupQuestChain(
-        IQuestChain _chain,
+        address _chainAddress,
         QuestChainCommons.QuestChainInfo calldata _info
     ) internal {
-        _chainToken.setTokenOwner(_chainCount, address(_chain));
-        _chain.init(_info);
-        _chains[_chainCount] = _chain;
+        _chainToken.setTokenOwner(_chainCount, _chainAddress);
+        IQuestChain(_chainAddress).init(_info);
+        _chains[_chainCount] = _chainAddress;
 
-        emit QuestChainCreated(_chainCount, address(_chain));
+        emit QuestChainCreated(_chainCount, _chainAddress);
 
         unchecked {
             ++_chainCount;
