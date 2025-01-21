@@ -93,29 +93,31 @@ contract QuestChain is
 
         require(_info.owners.length > 0, "QuestChain: no owners");
 
+        cascadeGrantRole(OWNER_ROLE, _msgSender());
+
         for (uint256 i = _info.owners.length - 1; i >= 0; ) {
-            grantRole(OWNER_ROLE, _info.owners[i]);
+            cascadeGrantRole(OWNER_ROLE, _info.owners[i]);
             unchecked {
                 --i;
             }
         }
 
         for (uint256 i = _info.admins.length - 1; i >= 0; ) {
-            grantRole(ADMIN_ROLE, _info.admins[i]);
+            cascadeGrantRole(ADMIN_ROLE, _info.admins[i]);
             unchecked {
                 --i;
             }
         }
 
         for (uint256 i = _info.editors.length - 1; i >= 0; ) {
-            grantRole(EDITOR_ROLE, _info.editors[i]);
+            cascadeGrantRole(EDITOR_ROLE, _info.editors[i]);
             unchecked {
                 --i;
             }
         }
 
         for (uint256 i = _info.reviewers.length - 1; i >= 0; ) {
-            grantRole(REVIEWER_ROLE, _info.reviewers[i]);
+            cascadeGrantRole(REVIEWER_ROLE, _info.reviewers[i]);
             unchecked {
                 --i;
             }
@@ -356,17 +358,17 @@ contract QuestChain is
      * @param _role role to be granted
      * @param _account address of the user
      */
-    function grantRole(
+    function cascadeGrantRole(
         bytes32 _role,
         address _account
-    ) public override onlyRole(getRoleAdmin(_role)) {
+    ) public onlyRole(getRoleAdmin(_role)) {
         _grantRole(_role, _account);
         if (_role == OWNER_ROLE) {
-            grantRole(ADMIN_ROLE, _account);
+            cascadeGrantRole(ADMIN_ROLE, _account);
         } else if (_role == ADMIN_ROLE) {
-            grantRole(EDITOR_ROLE, _account);
+            cascadeGrantRole(EDITOR_ROLE, _account);
         } else if (_role == EDITOR_ROLE) {
-            grantRole(REVIEWER_ROLE, _account);
+            cascadeGrantRole(REVIEWER_ROLE, _account);
         }
     }
 
