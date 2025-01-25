@@ -35,11 +35,9 @@ contract Shelf is
 
         factory = _msgSender();
 
-        for (uint256 i = 0; i < _info.admins.length; ) {
+        for(uint256 i = 0; i < _info.admins.length; ) {
             _grantRole(ADMIN_ROLE, _info.admins[i]);
-            unchecked {
-                ++i;
-            }
+            unchecked { ++i; }
         }
 
         emit ShelfCreated(_info.creator, _info.admins);
@@ -58,11 +56,9 @@ contract Shelf is
 
     function complete() public view returns (bool completed) {
         completed = true;
-        for (uint256 i = 0; completed && i < chains.length; ) {
+        for(uint256 i = 0; completed && i < chains.length; ) {
             completed = completed && IQuestChain(chains[i]).complete();
-            unchecked {
-                ++i;
-            }
+            unchecked { ++i; }
         }
     }
 }

@@ -93,36 +93,28 @@ contract QuestChain is
 
         require(_info.owners.length > 0, "QuestChain: no owners");
 
-        for (uint256 i = 0; i < _info.owners.length; ) {
+        for(uint256 i = 0; i < _info.owners.length; ) {
             _cascadeGrantRole(OWNER_ROLE, _info.owners[i]);
-            unchecked {
-                ++i;
-            }
+            unchecked { ++i; }
         }
 
-        for (uint256 i = 0; i < _info.admins.length; ) {
+        for(uint256 i = 0; i < _info.admins.length; ) {
             _cascadeGrantRole(ADMIN_ROLE, _info.admins[i]);
-            unchecked {
-                ++i;
-            }
+            unchecked { ++i; }
         }
 
-        for (uint256 i = 0; i < _info.editors.length; ) {
+        for(uint256 i = 0; i < _info.editors.length; ) {
             _cascadeGrantRole(EDITOR_ROLE, _info.editors[i]);
-            unchecked {
-                ++i;
-            }
+            unchecked { ++i; }
         }
 
-        for (uint256 i = 0; i < _info.reviewers.length; ) {
+        for(uint256 i = 0; i < _info.reviewers.length; ) {
             _cascadeGrantRole(REVIEWER_ROLE, _info.reviewers[i]);
-            unchecked {
-                ++i;
-            }
+            unchecked { ++i; }
         }
 
         questCount = questCount + _info.quests.length;
-        if (_info.paused) {
+        if(_info.paused) {
             _pause();
         }
 
@@ -181,11 +173,9 @@ contract QuestChain is
             "QuestChain: list length mismatch"
         );
 
-        for (uint256 i = 0; i < _loopLength; ) {
+        for(uint256 i = 0; i < _loopLength; ) {
             require(_idList[i] < questCount, "QuestChain: quest not found");
-            unchecked {
-                ++i;
-            }
+            unchecked { ++i; }
         }
 
         // log off chain details of quests edited
@@ -204,7 +194,7 @@ contract QuestChain is
             "QuestChain: list length mismatch"
         );
 
-        for (uint256 i = 0; i < _loopLength; ) {
+        for(uint256 i = 0; i < _loopLength; ) {
             // Check if quest is valid
             require(_idList[i] < questCount, "QuestChain: quest not found");
 
@@ -214,9 +204,7 @@ contract QuestChain is
                 _detailsList[i].skipReview
             );
 
-            unchecked {
-                ++i;
-            }
+            unchecked { ++i; }
         }
 
         emit ConfiguredQuests(_msgSender(), _idList, _detailsList);
@@ -238,11 +226,9 @@ contract QuestChain is
             "QuestChain: list length mismatch"
         );
 
-        for (uint256 i = 0; i < _loopLength; ) {
+        for(uint256 i = 0; i < _loopLength; ) {
             _submitProof(_idList[i]);
-            unchecked {
-                ++i;
-            }
+            unchecked { ++i; }
         }
 
         emit QuestProofsSubmitted(_msgSender(), _idList, _proofList);
@@ -270,11 +256,9 @@ contract QuestChain is
             "QuestChain: invalid params"
         );
 
-        for (uint256 i = 0; i < _loopLength; ) {
+        for(uint256 i = 0; i < _loopLength; ) {
             _reviewProof(_questerList[i], _idList[i], _successList[i]);
-            unchecked {
-                ++i;
-            }
+            unchecked { ++i; }
         }
 
         emit QuestProofsReviewed(
@@ -352,11 +336,11 @@ contract QuestChain is
      */
     function _cascadeGrantRole(bytes32 _role, address _account) internal {
         _grantRole(_role, _account);
-        if (_role == OWNER_ROLE) {
+        if(_role == OWNER_ROLE) {
             _cascadeGrantRole(ADMIN_ROLE, _account);
-        } else if (_role == ADMIN_ROLE) {
+        } else if(_role == ADMIN_ROLE) {
             _cascadeGrantRole(EDITOR_ROLE, _account);
-        } else if (_role == EDITOR_ROLE) {
+        } else if(_role == EDITOR_ROLE) {
             _cascadeGrantRole(REVIEWER_ROLE, _account);
         }
     }
@@ -371,11 +355,11 @@ contract QuestChain is
         address _account
     ) public override onlyRole(getRoleAdmin(_role)) {
         _revokeRole(_role, _account);
-        if (_role == REVIEWER_ROLE) {
+        if(_role == REVIEWER_ROLE) {
             revokeRole(EDITOR_ROLE, _account);
-        } else if (_role == EDITOR_ROLE) {
+        } else if(_role == EDITOR_ROLE) {
             revokeRole(ADMIN_ROLE, _account);
-        } else if (_role == ADMIN_ROLE) {
+        } else if(_role == ADMIN_ROLE) {
             revokeRole(OWNER_ROLE, _account);
         }
     }
@@ -393,21 +377,21 @@ contract QuestChain is
     function complete() public view returns (bool) {
         bool _onePassed;
 
-        for (uint256 _id = questCount - 1; _id >= 0; ) {
+        for(uint256 _id = 0; _id < questCount; ) {
             require(
-                questDetails[_id].optional ||
-                    questDetails[_id].paused ||
-                    _questStatus[_msgSender()][_id] == Status.pass,
+                (
+                    questDetails[_id].optional
+                    || questDetails[_id].paused
+                    || _questStatus[_msgSender()][_id] == Status.pass
+                ),
                 "QuestChain: chain incomplete"
             );
-            if (
-                !_onePassed &&
+            if(
+                !_onePassed
                 // At least one quest completed and reviewed.
-                _questStatus[_msgSender()][_id] == Status.pass
+                && _questStatus[_msgSender()][_id] == Status.pass
             ) _onePassed = true;
-            unchecked {
-                --_id;
-            }
+            unchecked { ++_id; }
         }
 
         require(_onePassed, "QuestChain: no approved reviews");

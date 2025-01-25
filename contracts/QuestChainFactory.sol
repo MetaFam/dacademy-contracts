@@ -91,9 +91,6 @@ contract QuestChainFactory is IQuestChainFactory, ReentrancyGuard {
     constructor(
         address __admin
     )
-        // address _treasury,
-        // address _paymentToken,
-        // uint256 _upgradeFee
         nonZeroAddr(__admin)
     {
         _chainToken = new QuestChainToken();
@@ -101,10 +98,6 @@ contract QuestChainFactory is IQuestChainFactory, ReentrancyGuard {
         _shelfTemplate = new Shelf();
 
         _admin = __admin;
-
-        // treasury = _treasury;
-        // paymentToken = IERC20Token(_paymentToken);
-        // upgradeFee = _upgradeFee;
 
         emit FactorySetup();
     }

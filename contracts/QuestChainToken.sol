@@ -45,7 +45,7 @@ contract QuestChainToken is IQuestChainToken, ERC1155 {
     }
 
     /*************************
-     ACCESS CONTROL FUNCTIONS
+     * ACCESS CONTROL FUNCTIONS
      *************************/
 
     /**

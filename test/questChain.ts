@@ -802,8 +802,8 @@
 
 //       expect(
 //         receipt.events?.some(event => {
-//           if (event.event === 'ConfiguredQuests') {
-//             if (
+//           if(event.event === 'ConfiguredQuests') {
+//             if(
 //               event.data ===
 //               ethers.utils.defaultAbiCoder.encode(
 //                 ['address', 'uint256[]', '(bool,bool,bool)[]'],
@@ -851,8 +851,8 @@
 
 //       expect(
 //         receipt.events?.some(event => {
-//           if (event.event === 'ConfiguredQuests') {
-//             if (
+//           if(event.event === 'ConfiguredQuests') {
+//             if(
 //               event.data ===
 //               ethers.utils.defaultAbiCoder.encode(
 //                 ['address', 'uint256[]', '(bool,bool,bool)[]'],
@@ -1134,8 +1134,8 @@
 
 //       expect(
 //         receipt.events?.some(event => {
-//           if (event.event === 'ConfiguredQuests') {
-//             if (
+//           if(event.event === 'ConfiguredQuests') {
+//             if(
 //               event.data ===
 //               ethers.utils.defaultAbiCoder.encode(
 //                 ['address', 'uint256[]', '(bool,bool,bool)[]'],

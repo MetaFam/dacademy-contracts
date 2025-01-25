@@ -67,7 +67,7 @@ export type SetupValues = {
 export const validateSetup = async (): Promise<SetupValues> => {
   const [deployer] = await ethers.getSigners();
   const address = await deployer.getAddress();
-  if (!deployer.provider) {
+  if(!deployer.provider) {
     throw new Error('Provider not found for network.');
   }
   const { chainId } = await deployer.provider.getNetwork();
@@ -78,7 +78,7 @@ export const validateSetup = async (): Promise<SetupValues> => {
     (deployer.provider as unknown as { connection: { url: string } }).connection
       .url,
   );
-  if (!Object.keys(NETWORK_NAME).includes(chainId.toString())) {
+  if(!Object.keys(NETWORK_NAME).includes(chainId.toString())) {
     throw new Error('Unsupported network.');
   }
   console.log('Account Address:', address);

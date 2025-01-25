@@ -52,15 +52,15 @@ library MultiToken {
      * @param _dest Destination address
      */
     function transferAsset(Asset memory _asset, address _dest) internal {
-        if (_asset.category == Category.ERC20) {
+        if(_asset.category == Category.ERC20) {
             IERC20 token = IERC20(_asset.assetAddress);
             token.safeTransfer(_dest, _asset.amount);
-        } else if (_asset.category == Category.ERC721) {
+        } else if(_asset.category == Category.ERC721) {
             IERC721 token = IERC721(_asset.assetAddress);
             token.safeTransferFrom(address(this), _dest, _asset.id);
-        } else if (_asset.category == Category.ERC1155) {
+        } else if(_asset.category == Category.ERC1155) {
             IERC1155 token = IERC1155(_asset.assetAddress);
-            if (_asset.amount == 0) {
+            if(_asset.amount == 0) {
                 _asset.amount = 1;
             }
             token.safeTransferFrom(
@@ -87,15 +87,15 @@ library MultiToken {
         address _source,
         address _dest
     ) internal {
-        if (_asset.category == Category.ERC20) {
+        if(_asset.category == Category.ERC20) {
             IERC20 token = IERC20(_asset.assetAddress);
             token.safeTransferFrom(_source, _dest, _asset.amount);
-        } else if (_asset.category == Category.ERC721) {
+        } else if(_asset.category == Category.ERC721) {
             IERC721 token = IERC721(_asset.assetAddress);
             token.safeTransferFrom(_source, _dest, _asset.id);
-        } else if (_asset.category == Category.ERC1155) {
+        } else if(_asset.category == Category.ERC1155) {
             IERC1155 token = IERC1155(_asset.assetAddress);
-            if (_asset.amount == 0) {
+            if(_asset.amount == 0) {
                 _asset.amount = 1;
             }
             token.safeTransferFrom(
@@ -117,13 +117,13 @@ library MultiToken {
      * @param _target Target address to be checked
      */
     function approveAsset(Asset memory _asset, address _target) internal {
-        if (_asset.category == Category.ERC20) {
+        if(_asset.category == Category.ERC20) {
             IERC20 token = IERC20(_asset.assetAddress);
             token.approve(_target, _asset.amount);
-        } else if (_asset.category == Category.ERC721) {
+        } else if(_asset.category == Category.ERC721) {
             IERC721 token = IERC721(_asset.assetAddress);
             token.approve(_target, _asset.id);
-        } else if (_asset.category == Category.ERC1155) {
+        } else if(_asset.category == Category.ERC1155) {
             IERC1155 token = IERC1155(_asset.assetAddress);
             token.setApprovalForAll(_target, true);
         } else {
@@ -141,17 +141,17 @@ library MultiToken {
         Asset memory _asset,
         address _target
     ) internal view returns (uint256) {
-        if (_asset.category == Category.ERC20) {
+        if(_asset.category == Category.ERC20) {
             IERC20 token = IERC20(_asset.assetAddress);
             return token.balanceOf(_target);
-        } else if (_asset.category == Category.ERC721) {
+        } else if(_asset.category == Category.ERC721) {
             IERC721 token = IERC721(_asset.assetAddress);
-            if (token.ownerOf(_asset.id) == _target) {
+            if(token.ownerOf(_asset.id) == _target) {
                 return 1;
             } else {
                 return 0;
             }
-        } else if (_asset.category == Category.ERC1155) {
+        } else if(_asset.category == Category.ERC1155) {
             IERC1155 token = IERC1155(_asset.assetAddress);
             return token.balanceOf(_target, _asset.id);
         } else {
@@ -168,14 +168,14 @@ library MultiToken {
      */
     function isValid(Asset memory _asset) internal pure returns (bool) {
         // ERC20 token has to have id set to 0
-        if (_asset.category == Category.ERC20 && _asset.id != 0) return false;
+        if(_asset.category == Category.ERC20 && _asset.id != 0) return false;
 
         // ERC721 token has to have amount set to 1
-        if (_asset.category == Category.ERC721 && _asset.amount != 1)
+        if(_asset.category == Category.ERC721 && _asset.amount != 1)
             return false;
 
         // Any categories have to have non-zero amount
-        if (_asset.amount == 0) return false;
+        if(_asset.amount == 0) return false;
 
         return true;
     }

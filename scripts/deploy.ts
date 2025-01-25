@@ -19,13 +19,13 @@ async function main() {
     encoding: 'utf-8',
   }).trim();
 
-  // if (TREASURY_ADDRESS[chainId] == null) {
+  // if(TREASURY_ADDRESS[chainId] == null) {
   //   throw new Error('`TREASURY_ADDRESS` not found.')
   // }
-  // if (PAYMENT_TOKEN[chainId] == null) {
+  // if(PAYMENT_TOKEN[chainId] == null) {
   //   throw new Error('`PAYMENT_TOKEN` not found.')
   // }
-  if (!deployer.provider) {
+  if(!deployer.provider) {
     throw new Error('Provider not found for network.');
   }
 
@@ -79,7 +79,7 @@ async function main() {
     NETWORK_CURRENCY[chainId],
   );
 
-  if (chainId === 31337) {
+  if(chainId === 31337) {
     console.debug(
       'Skipping writing deployment info & verification for local network.',
     );

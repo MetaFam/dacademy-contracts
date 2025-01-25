@@ -16,16 +16,16 @@ let accounts: any = process.env.MNEMONIC
   : null;
 accounts ??= process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : null;
 
-if (!accounts) {
+if(!accounts) {
   const mnemonicFile = 'mnemonic.txt';
-  if (fs.existsSync(mnemonicFile)) {
+  if(fs.existsSync(mnemonicFile)) {
     accounts = {
       mnemonic: fs.readFileSync(mnemonicFile).toString().trim(),
     };
   }
 }
 
-if (!accounts) {
+if(!accounts) {
   console.error('invalid env variable: PRIVATE_KEY or MNEMONIC');
   process.exit(1);
 }
@@ -35,7 +35,7 @@ task('accounts', 'Prints the list of accounts', async (_args, hre) => {
   const provider = hre.ethers.provider;
 
   console.info('Accounts:');
-  for (const { address } of accounts) {
+  for(const { address } of accounts) {
     const balance = await provider.getBalance(address);
     console.info(`   ${address}: ${balance}`);
   }
