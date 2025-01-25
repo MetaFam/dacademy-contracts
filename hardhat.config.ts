@@ -34,9 +34,10 @@ task('accounts', 'Prints the list of accounts', async (_args, hre) => {
   const accounts = await hre.ethers.getSigners();
   const provider = hre.ethers.provider;
 
+  console.info('Accounts:');
   for (const { address } of accounts) {
     const balance = await provider.getBalance(address);
-    console.info(`${address}: ${balance}`);
+    console.info(`   ${address}: ${balance}`);
   }
 });
 

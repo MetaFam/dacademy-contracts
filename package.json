@@ -15,10 +15,10 @@
     "lint:ts": "eslint --ignore-path .gitignore \"./**/*.{ts,js}\" --fix",
     "lint:sol": "solhint -f table \"contracts/{*,**/*}.sol\"",
     "format": "prettier --ignore-path .gitignore --write \"{*,**/*}.{ts,js,json,md,sol}\"",
-    "generate:qc": "yarn sol2uml storage ./contracts/,./node_modules/@openzeppelin/contracts/ -c QuestChain -o storage_diagrams/questChain.svg",
-    "generate:qcf": "yarn sol2uml storage ./contracts/,./node_modules/@openzeppelin/contracts/ -c QuestChainFactory -o storage_diagrams/questChainFactory.svg",
-    "generate:qct": "yarn sol2uml storage ./contracts/,./node_modules/@openzeppelin/contracts/ -c QuestChainToken -o storage_diagrams/questChainToken.svg",
-    "generate": "yarn generate:qcf && yarn generate:qct && yarn generate:qc",
+    "uml:qc": "yarn sol2uml storage ./contracts/,./node_modules/@openzeppelin/contracts/ -c QuestChain -o storage_diagrams/questChain.svg",
+    "uml:qcf": "yarn sol2uml storage ./contracts/,./node_modules/@openzeppelin/contracts/ -c QuestChainFactory -o storage_diagrams/questChainFactory.svg",
+    "uml:qct": "yarn sol2uml storage ./contracts/,./node_modules/@openzeppelin/contracts/ -c QuestChainToken -o storage_diagrams/questChainToken.svg",
+    "uml": "yarn generate:qcf && yarn generate:qct && yarn generate:qc",
     "prepare": "husky install"
   },
   "devDependencies": {

@@ -6,5 +6,5 @@
     "ordering": "error",
     "prettier/prettier": "error"
   },
-  "plugins": ["prettier"]
+  "plugins": []
 }

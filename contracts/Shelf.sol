@@ -35,24 +35,34 @@ contract Shelf is
 
         factory = _msgSender();
 
-        for (uint256 i = _info.admins.length - 1; i >= 0; ) {
+        for (uint256 i = 0; i < _info.admins.length; ) {
             _grantRole(ADMIN_ROLE, _info.admins[i]);
             unchecked {
-                --i;
+                ++i;
             }
         }
 
-        chains = _info.chains;
-
         emit ShelfCreated(_info.creator, _info.admins);
-        emit ShelfOrdered(_info.chains);
-        emit ShelfEdited(_info.details);
+        edit(_info.details);
+        order(_info.chains);
+    }
+
+    function order(address[] calldata _chains) public onlyRole(ADMIN_ROLE) {
+        chains = _chains;
+        emit ShelfOrdered(chains);
+    }
+
+    function edit(string calldata details) public onlyRole(ADMIN_ROLE) {
+        emit ShelfEdited(details);
     }
 
     function complete() public view returns (bool completed) {
         completed = true;
-        for (uint256 i = chains.length - 1; completed && i >= 0; i--) {
+        for (uint256 i = 0; completed && i < chains.length; ) {
             completed = completed && IQuestChain(chains[i]).complete();
+            unchecked {
+                ++i;
+            }
         }
     }
 }
