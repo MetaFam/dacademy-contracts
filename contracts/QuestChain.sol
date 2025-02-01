@@ -39,6 +39,7 @@ contract QuestChain is
     IQuestChainFactory public factory;
     IQuestChainToken public token;
     uint256 public chainId;
+    uint256 public tokenId;
     uint256 public questCount;
 
     // address public limiterContract;
@@ -84,6 +85,7 @@ contract QuestChain is
         factory = IQuestChainFactory(_msgSender());
         token = IQuestChainToken(factory.chainToken());
         chainId = factory.chainCount();
+        tokenId = factory.tokenCount();
 
         _setRoleAdmin(ADMIN_ROLE, OWNER_ROLE);
         _setRoleAdmin(EDITOR_ROLE, ADMIN_ROLE);
@@ -287,14 +289,14 @@ contract QuestChain is
         require(questCount > 0, "QuestChain: no quests found");
         require(complete(), "QuestChain: not complete");
 
-        token.mint(_msgSender(), chainId);
+        token.mint(_msgSender(), tokenId);
     }
 
     /**
      * @dev Burns NFT from the msg.sender
      */
     function burnToken() external {
-        token.burn(_msgSender(), chainId);
+        token.burn(_msgSender(), tokenId);
     }
 
     // /**
@@ -368,7 +370,7 @@ contract QuestChain is
      * @dev Public getter to view quest chain token uri
      */
     function getTokenURI() public view returns (string memory) {
-        return token.uri(chainId);
+        return token.uri(tokenId);
     }
 
     /**
@@ -439,7 +441,7 @@ contract QuestChain is
      * @param _uri off chain token uri
      */
     function _setTokenURI(string memory _uri) internal {
-        token.setTokenURI(chainId, _uri);
+        token.setTokenURI(tokenId, _uri);
         emit QuestChainTokenURIUpdated(_uri);
     }
 

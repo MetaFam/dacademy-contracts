@@ -7,8 +7,6 @@ pragma solidity ^0.8.0;
 import "../libraries/QuestChainCommons.sol";
 
 interface IShelf {
-    event ShelfCreated(address creator, address[] admins);
-
     event ShelfOrdered(address[] chains);
 
     event ShelfEdited(string details);

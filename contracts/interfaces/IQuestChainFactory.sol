@@ -8,13 +8,16 @@ pragma solidity ^0.8.0;
 
 import "./IERC20Token.sol";
 import "./IQuestChain.sol";
+import "./IShelf.sol";
 import "./IQuestChainToken.sol";
 import "../libraries/QuestChainCommons.sol";
 
 interface IQuestChainFactory {
     event FactorySetup();
     event QuestChainCreated(uint256 index, address questChain);
-    event ShelfCreated(uint256 index, address shelf);
+    event ShelfCreated(
+        address[] admins, IShelf shelf
+    );
     event AdminReplaceProposed(address proposedAdmin);
     event AdminReplaced(address admin);
     event PaymentTokenReplaceProposed(address proposedPaymentToken);
@@ -52,7 +55,11 @@ interface IQuestChainFactory {
 
     function chainCount() external view returns (uint256);
 
+    function tokenCount() external view returns (uint256);
+
     function chainTemplate() external view returns (IQuestChain);
+
+    function shelfTemplate() external view returns (IShelf);
 
     function chainToken() external view returns (IQuestChainToken);
 

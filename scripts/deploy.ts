@@ -111,6 +111,11 @@ async function main() {
     });
 
     await run('verify:verify', {
+      address: await factory.shelfTemplate(),
+      constructorArguments: [],
+    });
+
+    await run('verify:verify', {
       address: factory.address,
       constructorArguments: factoryArgs,
     });

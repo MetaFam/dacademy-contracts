@@ -32,6 +32,8 @@ contract QuestChainFactory is IQuestChainFactory, ReentrancyGuard {
     IShelf private immutable _shelfTemplate;
 
     uint256 private _chainCount = 0;
+    uint256 private _shelfCount = 0;
+
 
     address private _admin;
     address public proposedAdmin;
@@ -162,32 +164,43 @@ contract QuestChainFactory is IQuestChainFactory, ReentrancyGuard {
      * @dev Returns the address of a deployed quest chain proxy
      * @param _index the quest chain contract index
      */
-    function getQuestChain(uint256 _index) external view returns (IQuestChain) {
+    function getQuestChain(
+        uint256 _index
+    ) external view returns (IQuestChain) {
         return _chains[_index];
+    }
+
+    function tokenCount(
+    ) external view override returns (uint256) {
+        return _chainCount + _shelfCount;
     }
 
     function createShelf(
         QuestChainCommons.ShelfInfo calldata _info,
         bytes32 _salt
-    ) internal returns (address _shelfAddress) {
-        _shelfAddress = _newShelf(_salt);
+    ) internal returns (IShelf _shelf) {
+        _shelf = _newShelf(_salt);
 
-        _chainToken.setTokenOwner(_chainCount, _shelfAddress);
-        IShelf(_shelfAddress).init(_info);
+        _chainToken.setTokenOwner(
+            this.tokenCount(), address(_shelf)
+        );
+        _shelf.init(_info);
 
-        emit ShelfCreated(_chainCount, _shelfAddress);
+        emit ShelfCreated(_info.admins, _shelf);
 
-        unchecked {
-            ++_chainCount;
-        }
+        unchecked { ++_shelfCount; }
     }
 
     /**
      * @dev Internal function deploys a new shelf minimal proxy
      * @param _salt a nonce
      */
-    function _newShelf(bytes32 _salt) internal returns (address) {
-        return Clones.cloneDeterministic(address(_shelfTemplate), _salt);
+    function _newShelf(
+        bytes32 _salt
+    ) internal returns (IShelf) {
+        return IShelf(Clones.cloneDeterministic(
+            address(_shelfTemplate), _salt
+        ));
     }
 
     /**
@@ -207,7 +220,9 @@ contract QuestChainFactory is IQuestChainFactory, ReentrancyGuard {
      * @dev Internal function deploys a new quest chain minimal proxy
      * @param _salt a nonce
      */
-    function _newChain(bytes32 _salt) internal returns (IQuestChain) {
+    function _newChain(
+        bytes32 _salt
+    ) internal returns (IQuestChain) {
         address clone = (
             Clones.cloneDeterministic(address(_chainTemplate), _salt)
         );
@@ -223,26 +238,34 @@ contract QuestChainFactory is IQuestChainFactory, ReentrancyGuard {
         IQuestChain _chain,
         QuestChainCommons.QuestChainInfo calldata _info
     ) internal {
-        _chainToken.setTokenOwner(_chainCount, address(_chain));
+        _chainToken.setTokenOwner(
+            this.tokenCount(), address(_chain)
+        );
         _chain.init(_info);
         _chains[_chainCount] = _chain;
 
         emit QuestChainCreated(_chainCount, address(_chain));
 
-        unchecked {
-            ++_chainCount;
-        }
+        unchecked { ++_chainCount; }
     }
 
-    function chainCount() external view override returns (uint256) {
+    function chainCount(
+    ) external view override returns (uint256) {
         return _chainCount;
     }
 
-    function chainTemplate() external view override returns (IQuestChain) {
+    function chainTemplate(
+    ) external view override returns (IQuestChain) {
         return _chainTemplate;
     }
 
-    function chainToken() external view override returns (IQuestChainToken) {
+    function shelfTemplate(
+    ) external view override returns (IShelf) {
+        return _shelfTemplate;
+    }
+
+    function chainToken(
+    ) external view override returns (IQuestChainToken) {
         return _chainToken;
     }
 
