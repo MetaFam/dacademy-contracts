@@ -57,13 +57,19 @@ contract Shelf is
             unchecked { ++i; }
         }
 
-        edit(_info.details);
-        order(_info.chains);
+        _edit(_info.details);
+        _order(_info.chains);
     }
 
     function order(
         IQuestChain[] calldata _chains
     ) public onlyRole(ADMIN_ROLE) {
+        _order(_chains);
+    }
+
+    function _order(
+        IQuestChain[] calldata _chains
+    ) internal {
         chains = _chains;
         emit ShelfOrdered(chains);
     }
@@ -71,6 +77,12 @@ contract Shelf is
     function edit(
         string calldata details
     ) public onlyRole(ADMIN_ROLE) {
+        _edit(details);
+    }
+
+   function _edit(
+        string calldata details
+    ) internal {
         emit ShelfEdited(details);
     }
 
