@@ -20,26 +20,39 @@ contract Shelf is
     Pausable,
     AccessControl
 {
-    bytes32 public constant CREATOR_ROLE = DEFAULT_ADMIN_ROLE;
+    bytes32 public constant OWNER_ROLE = DEFAULT_ADMIN_ROLE;
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
 
-    address factory;
-    address[] public chains;
+    IQuestChainFactory factory;
+    IQuestChainToken token;
+    IQuestChain[] public chains;
+    uint256 public tokenId;
 
     function init(
         QuestChainCommons.ShelfInfo calldata _info
     ) external initializer {
         require(
-            _info.admins.length > 0,
-            "DAShelf: at least one admin required"
+            _info.owners.length > 0,
+            "DA Shelf: no owners"
         );
 
-        factory = _msgSender();
+        factory = IQuestChainFactory(_msgSender());
+        token = IQuestChainToken(factory.chainToken());
 
-        _setupRole(CREATOR_ROLE, _info.creator);
-        _setupRole(ADMIN_ROLE, _info.creator);
+        tokenId = factory.tokenCount();
 
-        for(uint256 i = 0; i < _info.admins.length; ) {
+        _setRoleAdmin(ADMIN_ROLE, OWNER_ROLE);
+
+        _setTokenURI(_info.tokenURI);
+
+        uint256 i = 0;
+        while(i < _info.owners.length) {
+            _grantRole(OWNER_ROLE, _info.owners[i]);
+            _grantRole(ADMIN_ROLE, _info.owners[i]);
+            unchecked { ++i; }
+        }
+
+        for(i = 0; i < _info.admins.length; ) {
             _grantRole(ADMIN_ROLE, _info.admins[i]);
             unchecked { ++i; }
         }
@@ -49,7 +62,7 @@ contract Shelf is
     }
 
     function order(
-        address[] calldata _chains
+        IQuestChain[] calldata _chains
     ) public onlyRole(ADMIN_ROLE) {
         chains = _chains;
         emit ShelfOrdered(chains);
@@ -67,5 +80,30 @@ contract Shelf is
             completed = completed && IQuestChain(chains[i]).complete();
             unchecked { ++i; }
         }
+    }
+
+    function getTokenURI() public view returns (string memory) {
+        return token.uri(tokenId);
+    }
+
+    function setTokenURI(
+        string memory _uri
+    ) external onlyRole(ADMIN_ROLE) {
+        _setTokenURI(_uri);
+    }
+
+    function _setTokenURI(string memory _uri) internal {
+        token.setTokenURI(tokenId, _uri);
+        // emit URIUpdated(_uri);
+    }
+
+    function burnToken() external {
+        token.burn(_msgSender(), tokenId);
+    }
+
+    function mintToken() external {
+        require(complete(), "Shelf: not complete");
+
+        token.mint(_msgSender(), tokenId);
     }
 }

@@ -92,7 +92,10 @@ async function main() {
       version: commitHash,
       factory: factory.address,
       token: questChainTokenAddress,
-      template: await factory.chainTemplate(),
+      templates: {
+        chain: await factory.chainTemplate(),
+        shelf: await factory.shelfTemplate(),
+      },
       txHash,
       blockNumber: receipt.blockNumber.toString(),
     };

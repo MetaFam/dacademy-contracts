@@ -178,7 +178,7 @@ contract QuestChainFactory is IQuestChainFactory, ReentrancyGuard {
     function createShelf(
         QuestChainCommons.ShelfInfo calldata _info,
         bytes32 _salt
-    ) internal returns (IShelf _shelf) {
+    ) external returns (IShelf _shelf) {
         _shelf = _newShelf(_salt);
 
         _chainToken.setTokenOwner(

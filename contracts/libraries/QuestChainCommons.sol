@@ -6,6 +6,8 @@ pragma solidity ^0.8.0;
 //   ║═╬╗│ │├┤ └─┐ │ ║  ├─┤├─┤││││└─┐
 //   ╚═╝╚└─┘└─┘└─┘ ┴ ╚═╝┴ ┴┴ ┴┴┘└┘└─┘
 
+import "../interfaces/IQuestChain.sol";
+
 library QuestChainCommons {
     struct QuestChainInfo {
         address[] owners;
@@ -19,10 +21,11 @@ library QuestChainCommons {
     }
 
     struct ShelfInfo {
-        address creator;
+        address[] owners;
         address[] admins;
-        address[] chains;
+        IQuestChain[] chains;
         string details;
+        string tokenURI;
     }
 
     function recoverParameters(
