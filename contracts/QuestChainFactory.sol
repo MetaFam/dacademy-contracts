@@ -12,6 +12,7 @@ import "@openzeppelin/contracts/proxy/Clones.sol";
 
 import "./interfaces/IQuestChain.sol";
 import "./interfaces/IQuestChainFactory.sol";
+import "./Collection.sol";
 import "./Shelf.sol";
 import "./QuestChain.sol";
 import "./QuestChainToken.sol";
@@ -30,6 +31,7 @@ contract QuestChainFactory is IQuestChainFactory, ReentrancyGuard {
     IQuestChainToken private immutable _chainToken;
     IQuestChain private immutable _chainTemplate;
     IShelf private immutable _shelfTemplate;
+    ICollection private immutable _collectionTemplate;
 
     uint256 private _chainCount = 0;
     uint256 private _shelfCount = 0;
@@ -47,37 +49,53 @@ contract QuestChainFactory is IQuestChainFactory, ReentrancyGuard {
 
     mapping(uint256 => IQuestChain) private _chains;
 
+    error NotAdmin(address attempted);
+
     /**
      * @dev Callable by admin only
      */
     modifier onlyAdmin() {
-        require(_admin == msg.sender, "QCFactory: not admin");
+        require(_admin == msg.sender, NotAdmin(msg.sender));
         _;
     }
+
+    error AddressNotZero(address _address);
 
     /**
      * @dev Enforces non-zero address
      */
     modifier nonZeroAddr(address _address) {
-        require(_address != address(0), "QCFactory: 0x0 address");
+        require(_address != address(0), AddressNotZero(_address));
         _;
     }
+
+    error UnchangedAddress(address from, address to);
 
     /**
      * @dev Enforces two addresses to be different
      */
     modifier changedAddr(address _oldAddress, address _newAddress) {
-        require(_oldAddress != _newAddress, "QCFactory: no change");
+        require(
+            _oldAddress != _newAddress,
+            UnchangedAddress(_oldAddress, _newAddress)
+        );
         _;
     }
+
+    error UnchangedUInt(uint256 from, uint256 to);
 
     /**
      * @dev Enforces two integers to be different
      */
     modifier changedUint(uint256 _oldUint, uint256 _newUint) {
-        require(_oldUint != _newUint, "QCFactory: no change");
+        require(
+            _oldUint != _newUint,
+            UnchangedUInt(_oldUint, _newUint)
+        );
         _;
     }
+
+    error OneDayWaitRequired(uint256 from);
 
     /**
      * @dev Enforces timestamps be at least a day ago
@@ -85,7 +103,7 @@ contract QuestChainFactory is IQuestChainFactory, ReentrancyGuard {
     modifier afterOneDay(uint256 _timestamp) {
         require(
             block.timestamp >= _timestamp + ONE_DAY,
-            "QCFactory: wait a day"
+            OneDayWaitRequired(_timestamp)
         );
         _;
     }
@@ -98,6 +116,7 @@ contract QuestChainFactory is IQuestChainFactory, ReentrancyGuard {
         _chainToken = new QuestChainToken();
         _chainTemplate = new QuestChain();
         _shelfTemplate = new Shelf();
+        _collectionTemplate = new Collection();
 
         _admin = __admin;
 
@@ -126,6 +145,8 @@ contract QuestChainFactory is IQuestChainFactory, ReentrancyGuard {
         emit AdminReplaceProposed(__admin);
     }
 
+    error NotProposedAdmin(address proposed, address sent);
+
     /**
      * @dev Executes the proposed admin replacement
      */
@@ -137,7 +158,7 @@ contract QuestChainFactory is IQuestChainFactory, ReentrancyGuard {
     {
         require(
             proposedAdmin == msg.sender,
-            "QCFactory: not the proposed admin"
+            NotProposedAdmin(proposedAdmin, msg.sender)
         );
 
         _admin = proposedAdmin;
@@ -176,17 +197,18 @@ contract QuestChainFactory is IQuestChainFactory, ReentrancyGuard {
     }
 
     function createShelf(
-        QuestChainCommons.ShelfInfo calldata _info,
+        IShelf.ShelfInfo calldata _info,
         bytes32 _salt
     ) external returns (IShelf _shelf) {
         _shelf = _newShelf(_salt);
 
-        _chainToken.setTokenOwner(
-            this.tokenCount(), address(_shelf)
-        );
-        _shelf.init(_info);
+        uint256 _tokenId = this.tokenCount();
 
-        emit ShelfCreated(_info.admins, _shelf);
+        emit ShelfCreated(_info.admins, _shelf, _tokenId);
+
+        _chainToken.setTokenOwner(_tokenId, address(_shelf));
+
+        _shelf.init(_info);
 
         unchecked { ++_shelfCount; }
     }
@@ -200,6 +222,29 @@ contract QuestChainFactory is IQuestChainFactory, ReentrancyGuard {
     ) internal returns (IShelf) {
         return IShelf(Clones.cloneDeterministic(
             address(_shelfTemplate), _salt
+        ));
+    }
+
+    function createCollection(
+        ICollection.CollectionInfo calldata _info,
+        bytes32 _salt
+    ) external returns (ICollection _collection) {
+        _collection = _newCollection(_salt);
+
+        emit CollectionCreated(_info.admins, _collection);
+
+        _collection.init(_info);
+    }
+
+    /**
+     * @dev Internal function deploys a new shelf minimal proxy
+     * @param _salt a nonce
+     */
+    function _newCollection(
+        bytes32 _salt
+    ) internal returns (ICollection) {
+        return ICollection(Clones.cloneDeterministic(
+            address(_collectionTemplate), _salt
         ));
     }
 
@@ -262,6 +307,11 @@ contract QuestChainFactory is IQuestChainFactory, ReentrancyGuard {
     function shelfTemplate(
     ) external view override returns (IShelf) {
         return _shelfTemplate;
+    }
+
+    function collectionTemplate(
+    ) external view override returns (ICollection) {
+        return _collectionTemplate;
     }
 
     function chainToken(

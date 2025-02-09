@@ -6,8 +6,6 @@ pragma solidity ^0.8.0;
 //   ║═╬╗│ │├┤ └─┐ │ ║  ├─┤├─┤││││└─┐
 //   ╚═╝╚└─┘└─┘└─┘ ┴ ╚═╝┴ ┴┴ ┴┴┘└┘└─┘
 
-import "../interfaces/IQuestChain.sol";
-
 library QuestChainCommons {
     struct QuestChainInfo {
         address[] owners;
@@ -20,18 +18,12 @@ library QuestChainCommons {
         string tokenURI;
     }
 
-    struct ShelfInfo {
-        address[] owners;
-        address[] admins;
-        IQuestChain[] chains;
-        string details;
-        string tokenURI;
-    }
+    error BadSignature(uint256 length);
 
     function recoverParameters(
         bytes memory _signature
     ) internal pure returns (uint8 v, bytes32 r, bytes32 s) {
-        require(_signature.length == 65, "QuestChainCommons: bad signature");
+        require(_signature.length == 65, BadSignature(_signature.length));
         // solhint-disable-next-line no-inline-assembly
         assembly {
             r := mload(add(_signature, 0x20))

@@ -32,13 +32,13 @@ async function main() {
   console.info('Deploying Quest Chains:', NETWORK_NAME[chainId]);
   console.info('`git` Commit Hash:', commitHash);
 
-  const QuestChain = await ethers.getContractFactory('QuestChain');
-  const Shelf = await ethers.getContractFactory('Shelf');
-  const chain = await QuestChain.deploy();
-  const shelf = await Shelf.deploy();
-  await Promise.all([chain.deployed(), shelf.deployed()]);
-  console.info('Chain Template Address:', chain.address);
-  console.info('Shelf Template Address:', shelf.address);
+  // const QuestChain = await ethers.getContractFactory('QuestChain');
+  // const Shelf = await ethers.getContractFactory('Shelf');
+  // const chain = await QuestChain.deploy();
+  // const shelf = await Shelf.deploy();
+  // await Promise.all([chain.deployed(), shelf.deployed()]);
+  // console.info('Chain Template Address:', chain.address);
+  // console.info('Shelf Template Address:', shelf.address);
 
   const QuestChainFactory = await ethers.getContractFactory(
     'QuestChainFactory',
@@ -95,9 +95,10 @@ async function main() {
       templates: {
         chain: await factory.chainTemplate(),
         shelf: await factory.shelfTemplate(),
+        collection: await factory.collectionTemplate(),
       },
       txHash,
-      blockNumber: receipt.blockNumber.toString(),
+      blockNumber: receipt.blockNumber,
     };
 
     const outFile = `deployments/${network.name}.json`;
@@ -108,6 +109,7 @@ async function main() {
     await factory.deployTransaction.wait(10);
 
     console.debug('Verifying Contracts…');
+
     await run('verify:verify', {
       address: await factory.chainTemplate(),
       constructorArguments: [],
@@ -115,6 +117,12 @@ async function main() {
 
     await run('verify:verify', {
       address: await factory.shelfTemplate(),
+      constructorArguments: [],
+      contract: "contracts/Shelf.sol:Shelf",
+    });
+
+    await run('verify:verify', {
+      address: await factory.collectionTemplate(),
       constructorArguments: [],
     });
 

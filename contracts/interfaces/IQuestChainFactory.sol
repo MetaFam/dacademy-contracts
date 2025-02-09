@@ -8,6 +8,7 @@ pragma solidity ^0.8.0;
 
 import "./IERC20Token.sol";
 import "./IQuestChain.sol";
+import "./ICollection.sol";
 import "./IShelf.sol";
 import "./IQuestChainToken.sol";
 import "../libraries/QuestChainCommons.sol";
@@ -16,7 +17,10 @@ interface IQuestChainFactory {
     event FactorySetup();
     event QuestChainCreated(uint256 index, address questChain);
     event ShelfCreated(
-        address[] admins, IShelf shelf
+        address[] admins, IShelf shelf, uint256 tokenId
+    );
+    event CollectionCreated(
+        address[] admins, ICollection collection
     );
     event AdminReplaceProposed(address proposedAdmin);
     event AdminReplaced(address admin);
@@ -30,6 +34,14 @@ interface IQuestChainFactory {
         QuestChainCommons.QuestChainInfo calldata _info,
         bytes32 _salt
     ) external returns (IQuestChain);
+    function createShelf(
+        IShelf.ShelfInfo calldata _info,
+        bytes32 _salt
+    ) external returns (IShelf);
+    function createCollection(
+        ICollection.CollectionInfo calldata _info,
+        bytes32 _salt
+    ) external returns (ICollection);
 
     // function createAndUpgrade(
     //     QuestChainCommons.QuestChainInfo calldata _info,
@@ -60,6 +72,8 @@ interface IQuestChainFactory {
     function chainTemplate() external view returns (IQuestChain);
 
     function shelfTemplate() external view returns (IShelf);
+
+    function collectionTemplate() external view returns (ICollection);
 
     function chainToken() external view returns (IQuestChainToken);
 

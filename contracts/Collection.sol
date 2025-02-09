@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.0;
 
-// ᗪ闩⼕闩ᗪ🝗爪丫 丂卄🝗㇄ﾁ
+// ᗪ闩⼕闩ᗪ🝗爪丫 ⼕ㄖ㇄㇄🝗⼕〸讠ㄖ𝓝
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
@@ -10,40 +10,31 @@ import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
 
+import "./interfaces/ICollection.sol";
 import "./interfaces/IShelf.sol";
-import "./interfaces/IQuestChainFactory.sol";
 
-contract Shelf is
-    IShelf,
+contract Collection is
+    ICollection,
     ReentrancyGuard,
     Initializable,
-    Pausable,
     AccessControl
 {
     error NoOwners();
-    error NotComplete();
 
     bytes32 public constant OWNER_ROLE = DEFAULT_ADMIN_ROLE;
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
 
     IQuestChainFactory factory;
-    IQuestChainToken token;
-    IQuestChain[] public chains;
-    uint256 public tokenId;
+    IShelf[] public shelves;
 
     function init(
-        ShelfInfo calldata _info
+        CollectionInfo calldata _info
     ) external initializer {
         require(_info.owners.length > 0, NoOwners());
 
         factory = IQuestChainFactory(_msgSender());
-        token = IQuestChainToken(factory.chainToken());
-
-        tokenId = factory.tokenCount();
 
         _setRoleAdmin(ADMIN_ROLE, OWNER_ROLE);
-
-        _setTokenURI(_info.tokenURI);
 
         uint256 i = 0;
         while(i < _info.owners.length) {
@@ -58,20 +49,20 @@ contract Shelf is
         }
 
         _edit(_info.details);
-        _order(_info.chains);
+        _order(_info.shelves);
     }
 
     function order(
-        IQuestChain[] calldata _chains
+        IShelf[] calldata _shelves
     ) public onlyRole(ADMIN_ROLE) {
-        _order(_chains);
+        _order(_shelves);
     }
 
     function _order(
-        IQuestChain[] calldata _chains
+        IShelf[] calldata _shelves
     ) internal {
-        chains = _chains;
-        emit ShelfOrdered(chains);
+        shelves = _shelves;
+        emit CollectionOrdered(shelves);
     }
 
     function edit(
@@ -83,39 +74,14 @@ contract Shelf is
    function _edit(
         string calldata details
     ) internal {
-        emit ShelfEdited(details);
+        emit CollectionEdited(details);
     }
 
     function complete() public view returns (bool completed) {
         completed = true;
-        for(uint256 i = 0; completed && i < chains.length; ) {
-            completed = completed && chains[i].complete();
+        for(uint256 i = 0; completed && i < shelves.length; ) {
+            completed = completed && shelves[i].complete();
             unchecked { ++i; }
         }
-    }
-
-    function getTokenURI() public view returns (string memory) {
-        return token.uri(tokenId);
-    }
-
-    function setTokenURI(
-        string memory _uri
-    ) external onlyRole(ADMIN_ROLE) {
-        _setTokenURI(_uri);
-    }
-
-    function _setTokenURI(string memory _uri) internal {
-        token.setTokenURI(tokenId, _uri);
-        // emit URIUpdated(_uri);
-    }
-
-    function burnToken() external {
-        token.burn(_msgSender(), tokenId);
-    }
-
-    function mintToken() external {
-        require(complete(), NotComplete());
-
-        token.mint(_msgSender(), tokenId);
     }
 }
