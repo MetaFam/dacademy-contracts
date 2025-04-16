@@ -6,13 +6,13 @@ pragma solidity ^0.8.0;
 //   ║═╬╗│ │├┤ └─┐ │ ║  ├─┤├─┤││││└─┐
 //   ╚═╝╚└─┘└─┘└─┘ ┴ ╚═╝┴ ┴┴ ┴┴┘└┘└─┘
 
-library QuestChainCommons {
-    struct QuestChainInfo {
+library BookCommons {
+    struct BookInfo {
         address[] owners;
         address[] admins;
         address[] editors;
         address[] reviewers;
-        string[] quests;
+        string[] chapters;
         bool paused;
         string details;
         string tokenURI;

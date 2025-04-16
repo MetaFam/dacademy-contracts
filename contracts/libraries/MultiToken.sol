@@ -2,7 +2,9 @@
 
 /*
 
-The library defines a token asset as a struct of token identifiers. It wraps transfer, allowance & balance check calls of the following token standards:
+The library defines a token asset as a struct of token identifiers.
+It wraps transfer, allowance & balance check calls of the following
+token standards:
 - ERC20
 - ERC721
 - ERC1155

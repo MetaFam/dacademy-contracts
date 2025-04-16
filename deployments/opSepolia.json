@@ -1,13 +1,13 @@
 {
   "network": "opSepolia",
-  "version": "65cf609",
-  "factory": "0x1516d70663B0624E30fF4C9c5F066393AA7E95b1",
-  "token": "0x001fB1A25dD2877780fF318e0E70F08dDdD261b3",
+  "version": "4251986",
+  "factory": "0x808c87B8E610EA4f694d8Cd0e1887cBA1260e715",
+  "token": "0x4a445D6F626963F713468Caa41Cf0439AeA54412",
   "templates": {
-    "chain": "0x0CA4146425aeEF8028b5e6F29439a12670F3Ed3B",
-    "shelf": "0x2CbE9D1910B71D81E5F0361be05efc9A6573b95b",
-    "collection": "0x33414C2A1FEc84195bfCED9fEfb9bE972E336b8A"
+    "book": "0x98bC6e6A306ea53d0c9fE4a27A4EBDC1fdfF99Be",
+    "shelf": "0x368A1f1D77C9fC0523431b2BBC223dbE3804E151",
+    "collection": "0x8E850212c4B30258af8a4D8e22592f87618F303F"
   },
-  "txHash": "0x61ff2c3a9a2730726547f76726b41f2adb47b9499e80654491338b91cf733859",
-  "blockNumber": 23638933
+  "txHash": "0xa2d2fbb360afd6e3fb77efa2ac665b12ba9347c9981057676610dc2b2aaafa82",
+  "blockNumber": 26486845
 }

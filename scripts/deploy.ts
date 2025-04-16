@@ -3,7 +3,7 @@ import fs from 'node:fs';
 
 import { ethers, network, run } from 'hardhat';
 
-import { QuestChainFactory } from '../types';
+import { BookFactory } from '../types';
 import {
   DEFAULT_UPGRADE_FEE,
   NETWORK_CURRENCY,
@@ -22,43 +22,43 @@ async function main() {
   // if(TREASURY_ADDRESS[chainId] == null) {
   //   throw new Error('`TREASURY_ADDRESS` not found.')
   // }
-  // if(PAYMENT_TOKEN[chainId] == null) {
+  // if(PAYMENT_TOKEN[bookId] == null) {
   //   throw new Error('`PAYMENT_TOKEN` not found.')
   // }
   if(!deployer.provider) {
     throw new Error('Provider not found for network.');
   }
 
-  console.info('Deploying Quest Chains:', NETWORK_NAME[chainId]);
+  console.info('Deploying dAcademy:', NETWORK_NAME[chainId]);
   console.info('`git` Commit Hash:', commitHash);
 
-  // const QuestChain = await ethers.getContractFactory('QuestChain');
+  // const Book = await ethers.getContractFactory('Book');
   // const Shelf = await ethers.getContractFactory('Shelf');
-  // const chain = await QuestChain.deploy();
+  // const book = await Book.deploy();
   // const shelf = await Shelf.deploy();
-  // await Promise.all([chain.deployed(), shelf.deployed()]);
-  // console.info('Chain Template Address:', chain.address);
+  // await Promise.all([book.deployed(), shelf.deployed()]);
+  // console.info('Chain Template Address:', book.address);
   // console.info('Shelf Template Address:', shelf.address);
 
-  const QuestChainFactory = await ethers.getContractFactory(
-    'QuestChainFactory',
+  const BookFactory = await ethers.getContractFactory(
+    'BookFactory',
   );
   const factoryArgs = [
-    // chain.address,
+    // book.address,
     // shelf.address,
     address,
     // TREASURY_ADDRESS[chainId],
     // PAYMENT_TOKEN[chainId],
     // DEFAULT_UPGRADE_FEE,
   ];
-  const factory = (await QuestChainFactory.deploy(
+  const factory = (await BookFactory.deploy(
     ...factoryArgs,
-  )) as QuestChainFactory;
+  )) as BookFactory;
   await factory.deployed();
   console.info('Factory Address:', factory.address);
 
-  const questChainTokenAddress = await factory.chainToken();
-  console.info('Token Address:', questChainTokenAddress);
+  const bookTokenAddress = await factory.bookToken();
+  console.info('Token Address:', bookTokenAddress);
 
   const txHash = factory.deployTransaction.hash;
   console.info('Transaction Hash:', txHash);
@@ -91,9 +91,9 @@ async function main() {
       network: network.name,
       version: commitHash,
       factory: factory.address,
-      token: questChainTokenAddress,
+      token: bookTokenAddress,
       templates: {
-        chain: await factory.chainTemplate(),
+        book: await factory.bookTemplate(),
         shelf: await factory.shelfTemplate(),
         collection: await factory.collectionTemplate(),
       },
@@ -111,7 +111,7 @@ async function main() {
     console.debug('Verifying Contracts…');
 
     await run('verify:verify', {
-      address: await factory.chainTemplate(),
+      address: await factory.bookTemplate(),
       constructorArguments: [],
     });
 
@@ -132,7 +132,7 @@ async function main() {
     });
 
     await run('verify:verify', {
-      address: questChainTokenAddress,
+      address: bookTokenAddress,
       constructorArguments: [],
     });
   } catch (error) {

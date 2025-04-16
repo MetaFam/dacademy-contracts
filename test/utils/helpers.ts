@@ -26,10 +26,10 @@ export const getContractAt = async <Type>(
   return ctr;
 };
 
-export const awaitQuestChainAddress = async (receipt: TransactionReceipt) => {
+export const awaitBookAddress = async (receipt: TransactionReceipt) => {
   if(!receipt || !receipt.logs) return '';
   const abi = new ethers.utils.Interface([
-    'event QuestChainCreated(uint256 id, address questChain)',
+    'event BookCreated(uint256 id, address book)',
   ]);
   const eventFragment = abi.events[Object.keys(abi.events)[0]];
   const eventTopic = abi.getEventTopic(eventFragment);
@@ -40,7 +40,7 @@ export const awaitQuestChainAddress = async (receipt: TransactionReceipt) => {
       event.data,
       event.topics,
     );
-    return decodedLog.questChain;
+    return decodedLog.book;
   }
   return '';
 };

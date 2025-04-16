@@ -7,15 +7,15 @@ pragma solidity ^0.8.0;
 //   ╚═╝╚└─┘└─┘└─┘ ┴ ╚═╝┴ ┴┴ ┴┴┘└┘└─┘
 
 import "./IERC20Token.sol";
-import "./IQuestChain.sol";
+import "./IBook.sol";
 import "./ICollection.sol";
 import "./IShelf.sol";
-import "./IQuestChainToken.sol";
-import "../libraries/QuestChainCommons.sol";
+import "./IBookToken.sol";
+import "../libraries/BookCommons.sol";
 
-interface IQuestChainFactory {
+interface IBookFactory {
     event FactorySetup();
-    event QuestChainCreated(uint256 index, address questChain);
+    event BookCreated(uint256 index, address book);
     event ShelfCreated(
         address[] admins, IShelf shelf, uint256 tokenId
     );
@@ -28,12 +28,12 @@ interface IQuestChainFactory {
     event PaymentTokenReplaced(IERC20Token paymentToken);
     event UpgradeFeeReplaceProposed(uint256 proposedUpgradeFee);
     event UpgradeFeeReplaced(uint256 upgradeFee);
-    event QuestChainUpgraded(address sender, address questChain);
+    event BookUpgraded(address sender, address book);
 
-    function createChain(
-        QuestChainCommons.QuestChainInfo calldata _info,
+    function createBook(
+        BookCommons.BookInfo calldata _info,
         bytes32 _salt
-    ) external returns (IQuestChain);
+    ) external returns (IBook);
     function createShelf(
         IShelf.ShelfInfo calldata _info,
         bytes32 _salt
@@ -44,38 +44,38 @@ interface IQuestChainFactory {
     ) external returns (ICollection);
 
     // function createAndUpgrade(
-    //     QuestChainCommons.QuestChainInfo calldata _info,
+    //     BookCommons.BookInfo calldata _info,
     //     bytes32 _salt
     // ) external returns (address);
 
     // function createAndUpgradeWithPermit(
-    //     QuestChainCommons.QuestChainInfo calldata _info,
+    //     BookCommons.BookInfo calldata _info,
     //     bytes32 _salt,
     //     uint256 _deadline,
     //     bytes calldata _signature
     // ) external returns (address);
 
-    // function upgradeQuestChain(address _questChainAddress) external;
+    // function upgradeBook(address _bookAddress) external;
 
-    // function upgradeQuestChainWithPermit(
-    //     address _questChainAddress,
+    // function upgradeBookWithPermit(
+    //     address _bookAddress,
     //     uint256 _deadline,
     //     bytes calldata _signature
     // ) external;
 
-    function getQuestChain(uint256 _index) external view returns (IQuestChain);
+    function getBook(uint256 _index) external view returns (IBook);
 
-    function chainCount() external view returns (uint256);
+    function bookCount() external view returns (uint256);
 
     function tokenCount() external view returns (uint256);
 
-    function chainTemplate() external view returns (IQuestChain);
+    function bookTemplate() external view returns (IBook);
 
     function shelfTemplate() external view returns (IShelf);
 
     function collectionTemplate() external view returns (ICollection);
 
-    function chainToken() external view returns (IQuestChainToken);
+    function bookToken() external view returns (IBookToken);
 
     function admin() external view returns (address);
 

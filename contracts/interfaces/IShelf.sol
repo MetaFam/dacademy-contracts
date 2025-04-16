@@ -4,18 +4,18 @@ pragma solidity ^0.8.0;
 
 // ᗪ闩⼕闩ᗪ🝗爪丫
 
-import "../interfaces/IQuestChain.sol";
+import "../interfaces/IBook.sol";
 
 interface IShelf {
     struct ShelfInfo {
         address[] owners;
         address[] admins;
-        IQuestChain[] chains;
+        IBook[] books;
         string details;
         string tokenURI;
     }
 
-    event ShelfOrdered(IQuestChain[] chains);
+    event ShelfOrdered(IBook[] books);
 
     event ShelfEdited(string details);
 

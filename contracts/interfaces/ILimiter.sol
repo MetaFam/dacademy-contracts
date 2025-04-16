@@ -9,6 +9,6 @@ pragma solidity ^0.8.0;
 interface ILimiter {
     function submitProofLimiter(
         address _sender,
-        uint256[] calldata _questIdList
+        uint256[] calldata _bookIdList
     ) external;
 }

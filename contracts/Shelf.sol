@@ -11,7 +11,7 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
 
 import "./interfaces/IShelf.sol";
-import "./interfaces/IQuestChainFactory.sol";
+import "./interfaces/IBookFactory.sol";
 
 contract Shelf is
     IShelf,
@@ -26,9 +26,9 @@ contract Shelf is
     bytes32 public constant OWNER_ROLE = DEFAULT_ADMIN_ROLE;
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
 
-    IQuestChainFactory factory;
-    IQuestChainToken token;
-    IQuestChain[] public chains;
+    IBookFactory factory;
+    IBookToken token;
+    IBook[] public books;
     uint256 public tokenId;
 
     function init(
@@ -36,8 +36,8 @@ contract Shelf is
     ) external initializer {
         require(_info.owners.length > 0, NoOwners());
 
-        factory = IQuestChainFactory(_msgSender());
-        token = IQuestChainToken(factory.chainToken());
+        factory = IBookFactory(_msgSender());
+        token = IBookToken(factory.bookToken());
 
         tokenId = factory.tokenCount();
 
@@ -58,20 +58,20 @@ contract Shelf is
         }
 
         _edit(_info.details);
-        _order(_info.chains);
+        _order(_info.books);
     }
 
     function order(
-        IQuestChain[] calldata _chains
+        IBook[] calldata _books
     ) public onlyRole(ADMIN_ROLE) {
-        _order(_chains);
+        _order(_books);
     }
 
     function _order(
-        IQuestChain[] calldata _chains
+        IBook[] calldata _books
     ) internal {
-        chains = _chains;
-        emit ShelfOrdered(chains);
+        books = _books;
+        emit ShelfOrdered(books);
     }
 
     function edit(
@@ -88,8 +88,8 @@ contract Shelf is
 
     function complete() public view returns (bool completed) {
         completed = true;
-        for(uint256 i = 0; completed && i < chains.length; ) {
-            completed = completed && chains[i].complete();
+        for(uint256 i = 0; completed && i < books.length; ) {
+            completed = completed && books[i].complete();
             unchecked { ++i; }
         }
     }

@@ -10,6 +10,7 @@ import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
 
+import "./interfaces/IBookFactory.sol";
 import "./interfaces/ICollection.sol";
 import "./interfaces/IShelf.sol";
 
@@ -24,7 +25,7 @@ contract Collection is
     bytes32 public constant OWNER_ROLE = DEFAULT_ADMIN_ROLE;
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
 
-    IQuestChainFactory factory;
+    IBookFactory factory;
     IShelf[] public shelves;
 
     function init(
@@ -32,7 +33,7 @@ contract Collection is
     ) external initializer {
         require(_info.owners.length > 0, NoOwners());
 
-        factory = IQuestChainFactory(_msgSender());
+        factory = IBookFactory(_msgSender());
 
         _setRoleAdmin(ADMIN_ROLE, OWNER_ROLE);
 

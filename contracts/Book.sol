@@ -12,12 +12,12 @@ import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
 
-import "./interfaces/IQuestChain.sol";
+import "./interfaces/IBook.sol";
 import "./interfaces/ILimiter.sol";
 
 /// @author @dan13ram, @parv3213, @dysbulic, @Omka
-contract QuestChain is
-    IQuestChain,
+contract Book is
+    IBook,
     ReentrancyGuard,
     Initializable,
     Pausable,
@@ -36,11 +36,11 @@ contract QuestChain is
      * STATE VARIABLES
      *******************************/
     // bool public premium;
-    IQuestChainFactory public factory;
-    IQuestChainToken public token;
-    uint256 public chainId;
+    IBookFactory public factory;
+    IBookToken public token;
+    uint256 public bookId;
     uint256 public tokenId;
-    uint256 public questCount;
+    uint256 public chapterCount;
 
     // address public limiterContract;
 
@@ -48,30 +48,30 @@ contract QuestChain is
      * MAPPING STRUCTS EVENTS MODIFIER
      *******************************/
 
-    mapping(uint256 => QuestDetails) public questDetails;
-    mapping(address => mapping(uint256 => Status)) private _questStatus;
+    mapping(uint256 => ChapterDetails) public chapterDetails;
+    mapping(address => mapping(uint256 => Status)) private _chapterStatus;
 
     /**
      * @dev Callable by factory contract only
      */
     modifier onlyFactory() {
-        require(_msgSender() == address(factory), "QuestChain: not factory");
+        require(_msgSender() == address(factory), "Book: not factory");
         _;
     }
 
     // /**
-    //  * @dev Functions which are supported only for premium quest chains
+    //  * @dev Functions which are supported only for premium books
     //  */
     // modifier onlyPremium() {
-    //     require(premium, "QuestChain: not premium");
+    //     require(premium, "Book: not premium");
     //     _;
     // }
 
     /**
-     * @dev Modifier to make a function callable only when the quest is valid
+     * @dev Modifier to make a function callable only when the book is valid
      */
-    modifier validQuest(uint256 _id) {
-        require(_id < questCount, "QuestChain: quest not found");
+    modifier validChapter(uint256 _id) {
+        require(_id < chapterCount, "Book: chapter not found");
         _;
     }
 
@@ -80,11 +80,11 @@ contract QuestChain is
     }
 
     function init(
-        QuestChainCommons.QuestChainInfo calldata _info
+        BookCommons.BookInfo calldata _info
     ) external initializer {
-        factory = IQuestChainFactory(_msgSender());
-        token = IQuestChainToken(factory.chainToken());
-        chainId = factory.chainCount();
+        factory = IBookFactory(_msgSender());
+        token = IBookToken(factory.bookToken());
+        bookId = factory.bookCount();
         tokenId = factory.tokenCount();
 
         _setRoleAdmin(ADMIN_ROLE, OWNER_ROLE);
@@ -93,7 +93,7 @@ contract QuestChain is
 
         _setTokenURI(_info.tokenURI);
 
-        require(_info.owners.length > 0, "QuestChain: no owners");
+        require(_info.owners.length > 0, "Book: no owners");
 
         for(uint256 i = 0; i < _info.owners.length; ) {
             _cascadeGrantRole(OWNER_ROLE, _info.owners[i]);
@@ -115,12 +115,12 @@ contract QuestChain is
             unchecked { ++i; }
         }
 
-        questCount = questCount + _info.quests.length;
+        chapterCount = chapterCount + _info.chapters.length;
         if(_info.paused) {
             _pause();
         }
 
-        emit QuestChainInit(_info.details, _info.quests, _info.paused);
+        emit BookInit(_info.details, _info.chapters, _info.paused);
     }
 
     /**
@@ -138,31 +138,31 @@ contract QuestChain is
     }
 
     /**
-     * @dev Emits event to update quest chain details
-     * @param _details uri of off chain details for quest chain
+     * @dev Emits event on update of book details
+     * @param _details uri of book details for book
      */
     function edit(string calldata _details) external onlyRole(ADMIN_ROLE) {
-        emit QuestChainEdited(_msgSender(), _details);
+        emit BookEdited(_msgSender(), _details);
     }
 
     /**
-     * @dev Creates quests in quest chain
-     * @param _detailsList list of uris of off chain details for new quests
+     * @dev Creates chapters in a book
+     * @param _detailsList list of uris of off book details for new chapters
      */
-    function createQuests(
+    function createChapters(
         string[] calldata _detailsList
     ) external onlyRole(EDITOR_ROLE) {
-        questCount += _detailsList.length;
+        chapterCount += _detailsList.length;
 
-        emit QuestsCreated(_msgSender(), _detailsList);
+        emit ChaptersCreated(_msgSender(), _detailsList);
     }
 
     /**
-     * @dev Edits existing quests in quest chain
-     * @param _idList list of quest ids of the quests to be edited
-     * @param _detailsList list of uris of off chain details for each quest
+     * @dev Edits existing chapters in book
+     * @param _idList list of chapter ids of the chapters to be edited
+     * @param _detailsList list of uris of details for each chapter
      */
-    function editQuests(
+    function editChapters(
         uint256[] calldata _idList,
         string[] calldata _detailsList
     ) external onlyRole(EDITOR_ROLE) {
@@ -172,35 +172,33 @@ contract QuestChain is
         // ensure equal length arrays
         require(
             _loopLength == _detailsList.length,
-            "QuestChain: list length mismatch"
+            "Book: list length mismatch"
         );
 
         for(uint256 i = 0; i < _loopLength; ) {
-            require(_idList[i] < questCount, "QuestChain: quest not found");
+            require(_idList[i] < chapterCount, "Book: chapter not found");
             unchecked { ++i; }
         }
 
-        // log off chain details of quests edited
-        emit QuestsEdited(_msgSender(), _idList, _detailsList);
+        // log of book details of chapters edited
+        emit ChaptersEdited(_msgSender(), _idList, _detailsList);
     }
 
-    function configureQuests(
+    function configureChapters(
         uint256[] calldata _idList,
-        QuestDetails[] calldata _detailsList
+        ChapterDetails[] calldata _detailsList
     ) external onlyRole(EDITOR_ROLE) {
         uint256 _loopLength = _idList.length;
 
-        // Check if length of questIdList equals questDetailsList
         require(
             _loopLength == _detailsList.length,
-            "QuestChain: list length mismatch"
+            "Book: list length mismatch"
         );
 
         for(uint256 i = 0; i < _loopLength; ) {
-            // Check if quest is valid
-            require(_idList[i] < questCount, "QuestChain: quest not found");
+            require(_idList[i] < chapterCount, "Book: chapter not found");
 
-            questDetails[_idList[i]] = QuestDetails(
+            chapterDetails[_idList[i]] = ChapterDetails(
                 _detailsList[i].paused,
                 _detailsList[i].optional,
                 _detailsList[i].skipReview
@@ -209,13 +207,13 @@ contract QuestChain is
             unchecked { ++i; }
         }
 
-        emit ConfiguredQuests(_msgSender(), _idList, _detailsList);
+        emit ConfiguredChapters(_msgSender(), _idList, _detailsList);
     }
 
     /**
-     * @dev Submit proofs for completing particular quests in quest chain
-     * @param _idList list of quest ids of the quest submissions
-     * @param _proofList list of off chain proofs for each quest
+     * @dev Submit proofs for completing particular chapters in book
+     * @param _idList list of chapter ids of the chapter submissions
+     * @param _proofList list of off book proofs for each chapter
      */
     function submitProofs(
         uint256[] calldata _idList,
@@ -225,7 +223,7 @@ contract QuestChain is
 
         require(
             _loopLength == _proofList.length,
-            "QuestChain: list length mismatch"
+            "Book: list length mismatch"
         );
 
         for(uint256 i = 0; i < _loopLength; ) {
@@ -233,39 +231,39 @@ contract QuestChain is
             unchecked { ++i; }
         }
 
-        emit QuestProofsSubmitted(_msgSender(), _idList, _proofList);
+        emit ChapterProofsSubmitted(_msgSender(), _idList, _proofList);
     }
 
     /**
-     * @dev Reviews proofs for proofs previously submitted by questers
-     * @param _questerList list of questers whose submissions are being reviewed
-     * @param _idList list of quest ids of the quest submissions
+     * @dev Reviews proofs for proofs previously submitted by users
+     * @param _userList list of users whose submissions are being reviewed
+     * @param _idList list of chapter ids of the submissions
      * @param _successList list of booleans accepting or rejecting submissions
-     * @param _detailsList list of off chain comments for each submission
+     * @param _detailsList list of comments for each submission
      */
     function reviewProofs(
-        address[] calldata _questerList,
+        address[] calldata _userList,
         uint256[] calldata _idList,
         bool[] calldata _successList,
         string[] calldata _detailsList
     ) external onlyRole(REVIEWER_ROLE) {
-        uint256 _loopLength = _questerList.length;
+        uint256 _loopLength = _userList.length;
 
         require(
             _loopLength == _idList.length &&
                 _loopLength == _successList.length &&
                 _loopLength == _detailsList.length,
-            "QuestChain: invalid params"
+            "Book: invalid params"
         );
 
         for(uint256 i = 0; i < _loopLength; ) {
-            _reviewProof(_questerList[i], _idList[i], _successList[i]);
+            _reviewProof(_userList[i], _idList[i], _successList[i]);
             unchecked { ++i; }
         }
 
-        emit QuestProofsReviewed(
+        emit ChapterProofsReviewed(
             _msgSender(),
-            _questerList,
+            _userList,
             _idList,
             _successList,
             _detailsList
@@ -273,8 +271,8 @@ contract QuestChain is
     }
 
     /**
-     * @dev Updates token URI for the quest chain NFT
-     * @param _uri off chain token uri
+     * @dev Updates token URI for the book NFT
+     * @param _uri off book token uri
      */
     function setTokenURI(
         string memory _uri
@@ -283,11 +281,11 @@ contract QuestChain is
     }
 
     /**
-     * @dev Mints NFT to the msg.sender if they have completed all quests
+     * @dev Mints NFT to the msg.sender if they have completed all chapters
      */
     function mintToken() external {
-        require(questCount > 0, "QuestChain: no quests found");
-        require(complete(), "QuestChain: not complete");
+        require(chapterCount > 0, "Book: no chapters found");
+        require(complete(), "Book: not complete");
 
         token.mint(_msgSender(), tokenId);
     }
@@ -300,23 +298,23 @@ contract QuestChain is
     }
 
     // /**
-    //  * @dev Upgrades quest chain to premium
+    //  * @dev Upgrades book to premium
     //  */
     // function upgrade() external onlyFactory {
-    //     require(!premium, "QuestChain: already upgraded");
+    //     require(!premium, "Book: already upgraded");
     //     premium = true;
     // }
 
     /**
-     * @dev Public getter to read status of completion of a quest by a particular quester
-     * @param _quester address of quester
-     * @param _id identifier of the quest
+     * @dev Public getter to read status of completion of a chapter by a particular user
+     * @param _user address of user
+     * @param _id identifier of the chapter
      */
-    function questStatus(
-        address _quester,
+    function chapterStatus(
+        address _user,
         uint256 _id
-    ) external view validQuest(_id) returns (Status) {
-        return _questStatus[_quester][_id];
+    ) external view validChapter(_id) returns (Status) {
+        return _chapterStatus[_user][_id];
     }
 
     /**
@@ -367,7 +365,7 @@ contract QuestChain is
     }
 
     /**
-     * @dev Public getter to view quest chain token uri
+     * @dev Public getter to view book token uri
      */
     function getTokenURI() public view returns (string memory) {
         return token.uri(tokenId);
@@ -379,91 +377,87 @@ contract QuestChain is
     function complete() public view returns (bool) {
         bool _onePassed;
 
-        for(uint256 _id = 0; _id < questCount; ) {
+        for(uint256 _id = 0; _id < chapterCount; ) {
             require(
                 (
-                    questDetails[_id].optional
-                    || questDetails[_id].paused
-                    || _questStatus[_msgSender()][_id] == Status.pass
+                    chapterDetails[_id].optional
+                    || chapterDetails[_id].paused
+                    || _chapterStatus[_msgSender()][_id] == Status.pass
                 ),
-                "QuestChain: chain incomplete"
+                "Book: book incomplete"
             );
             if(
                 !_onePassed
-                // At least one quest completed and reviewed.
-                && _questStatus[_msgSender()][_id] == Status.pass
+                // At least one chapter completed and reviewed.
+                && _chapterStatus[_msgSender()][_id] == Status.pass
             ) _onePassed = true;
             unchecked { ++_id; }
         }
 
-        require(_onePassed, "QuestChain: no approved reviews");
+        require(_onePassed, "Book: no approved reviews");
 
         return true;
     }
 
     /**
-     * @dev internal function to update status of quest to review
-     * @param _id identifier of quest
+     * @dev internal function to update status of chapter to review
+     * @param _id identifier of chapter
      */
-    function _submitProof(uint256 _id) internal validQuest(_id) {
-        require(!questDetails[_id].paused, "QuestChain: quest paused");
+    function _submitProof(uint256 _id) internal validChapter(_id) {
+        require(!chapterDetails[_id].paused, "Book: chapter paused");
         require(
-            _questStatus[_msgSender()][_id] != Status.pass,
-            "QuestChain: already passed"
+            _chapterStatus[_msgSender()][_id] != Status.pass,
+            "Book: already passed"
         );
 
-        questDetails[_id].skipReview
-            ? _questStatus[_msgSender()][_id] = Status.pass
-            : _questStatus[_msgSender()][_id] = Status.review;
+        chapterDetails[_id].skipReview
+            ? _chapterStatus[_msgSender()][_id] = Status.pass
+            : _chapterStatus[_msgSender()][_id] = Status.review;
     }
 
     /**
-     * @dev internal function to review quest
-     * @param _quester quester address
-     * @param _id identifier of quest
+     * @dev internal function to review chapter
+     * @param _user user address
+     * @param _id identifier of chapter
      * @param _success accepting / rejecting proof
      */
     function _reviewProof(
-        address _quester,
+        address _user,
         uint256 _id,
         bool _success
-    ) internal validQuest(_id) {
+    ) internal validChapter(_id) {
         require(
-            _questStatus[_quester][_id] == Status.review,
-            "QuestChain: quest not in review"
+            _chapterStatus[_user][_id] == Status.review,
+            "Book: chapter not in review"
         );
 
-        _questStatus[_quester][_id] = _success ? Status.pass : Status.fail;
+        _chapterStatus[_user][_id] = _success ? Status.pass : Status.fail;
     }
 
     /**
      * @dev internal function to update token uri
-     * @param _uri off chain token uri
+     * @param _uri off book token uri
      */
     function _setTokenURI(string memory _uri) internal {
         token.setTokenURI(tokenId, _uri);
-        emit QuestChainTokenURIUpdated(_uri);
+        emit BookTokenURIUpdated(_uri);
     }
 
-    function questChainFactory()
+    function bookFactory()
         external
         view
         override
-        returns (IQuestChainFactory)
+        returns (IBookFactory)
     {
         return factory;
     }
 
-    function questChainToken()
+    function bookToken()
         external
         view
         override
-        returns (IQuestChainToken)
+        returns (IBookToken)
     {
         return token;
-    }
-
-    function questChainId() external view override returns (uint256) {
-        return chainId;
     }
 }

@@ -10,30 +10,30 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/proxy/Clones.sol";
 
-import "./interfaces/IQuestChain.sol";
-import "./interfaces/IQuestChainFactory.sol";
+import "./interfaces/IBook.sol";
+import "./interfaces/IBookFactory.sol";
 import "./Collection.sol";
 import "./Shelf.sol";
-import "./QuestChain.sol";
-import "./QuestChainToken.sol";
+import "./Book.sol";
+import "./BookToken.sol";
 
 // author: @dan13ram
 
 /* solhint-disable not-rely-on-time */
 
-contract QuestChainFactory is IQuestChainFactory, ReentrancyGuard {
+contract BookFactory is IBookFactory, ReentrancyGuard {
     using SafeERC20 for IERC20Token;
 
     /********************************
      * STATE VARIABLES
      *******************************/
 
-    IQuestChainToken private immutable _chainToken;
-    IQuestChain private immutable _chainTemplate;
+    IBookToken private immutable _bookToken;
+    IBook private immutable _bookTemplate;
     IShelf private immutable _shelfTemplate;
     ICollection private immutable _collectionTemplate;
 
-    uint256 private _chainCount = 0;
+    uint256 private _bookCount = 0;
     uint256 private _shelfCount = 0;
 
 
@@ -47,7 +47,7 @@ contract QuestChainFactory is IQuestChainFactory, ReentrancyGuard {
      * MAPPING STRUCTS EVENTS MODIFIER
      *********************************/
 
-    mapping(uint256 => IQuestChain) private _chains;
+    mapping(uint256 => IBook) private _books;
 
     error NotAdmin(address attempted);
 
@@ -113,8 +113,8 @@ contract QuestChainFactory is IQuestChainFactory, ReentrancyGuard {
     )
         nonZeroAddr(__admin)
     {
-        _chainToken = new QuestChainToken();
-        _chainTemplate = new QuestChain();
+        _bookToken = new BookToken();
+        _bookTemplate = new Book();
         _shelfTemplate = new Shelf();
         _collectionTemplate = new Collection();
 
@@ -170,30 +170,30 @@ contract QuestChainFactory is IQuestChainFactory, ReentrancyGuard {
     }
 
     /**
-     * @dev Deploys a new quest chain minimal proxy
+     * @dev Deploys a new book minimal proxy
      * @param _info the initialization data struct for our new clone
      * @param _salt an arbitrary source of entropy
      */
-    function createChain(
-        QuestChainCommons.QuestChainInfo calldata _info,
+    function createBook(
+        BookCommons.BookInfo calldata _info,
         bytes32 _salt
-    ) external returns (IQuestChain) {
-        return _createChain(_info, _salt);
+    ) external returns (IBook) {
+        return _createBook(_info, _salt);
     }
 
     /**
-     * @dev Returns the address of a deployed quest chain proxy
-     * @param _index the quest chain contract index
+     * @dev Returns the address of a deployed book proxy
+     * @param _index the book contract index
      */
-    function getQuestChain(
+    function getBook(
         uint256 _index
-    ) external view returns (IQuestChain) {
-        return _chains[_index];
+    ) external view returns (IBook) {
+        return _books[_index];
     }
 
     function tokenCount(
     ) external view override returns (uint256) {
-        return _chainCount + _shelfCount;
+        return _bookCount + _shelfCount;
     }
 
     function createShelf(
@@ -206,7 +206,7 @@ contract QuestChainFactory is IQuestChainFactory, ReentrancyGuard {
 
         emit ShelfCreated(_info.admins, _shelf, _tokenId);
 
-        _chainToken.setTokenOwner(_tokenId, address(_shelf));
+        _bookToken.setTokenOwner(_tokenId, address(_shelf));
 
         _shelf.init(_info);
 
@@ -249,59 +249,59 @@ contract QuestChainFactory is IQuestChainFactory, ReentrancyGuard {
     }
 
     /**
-     * @dev Internal function deploys and initializes a new quest chain minimal proxy
+     * @dev Internal function deploys and initializes a new book minimal proxy
      * @param _info the initialization data struct for our new clone
      * @param _salt an arbitrary source of entropy
      */
-    function _createChain(
-        QuestChainCommons.QuestChainInfo calldata _info,
+    function _createBook(
+        BookCommons.BookInfo calldata _info,
         bytes32 _salt
-    ) internal returns (IQuestChain _chain) {
-        _chain = _newChain(_salt);
-        _setupQuestChain(_chain, _info);
+    ) internal returns (IBook _book) {
+        _book = _newBook(_salt);
+        _setupBook(_book, _info);
     }
 
     /**
-     * @dev Internal function deploys a new quest chain minimal proxy
+     * @dev Internal function deploys a new book minimal proxy
      * @param _salt a nonce
      */
-    function _newChain(
+    function _newBook(
         bytes32 _salt
-    ) internal returns (IQuestChain) {
+    ) internal returns (IBook) {
         address clone = (
-            Clones.cloneDeterministic(address(_chainTemplate), _salt)
+            Clones.cloneDeterministic(address(_bookTemplate), _salt)
         );
-        return IQuestChain(clone);
+        return IBook(clone);
     }
 
     /**
-     * @dev Internal function initializes a new quest chain minimal proxy
-     * @param _chain the new minimal proxy's address
+     * @dev Internal function initializes a new book minimal proxy
+     * @param _book the new minimal proxy's address
      * @param _info the initialization parameters
      */
-    function _setupQuestChain(
-        IQuestChain _chain,
-        QuestChainCommons.QuestChainInfo calldata _info
+    function _setupBook(
+        IBook _book,
+        BookCommons.BookInfo calldata _info
     ) internal {
-        _chainToken.setTokenOwner(
-            this.tokenCount(), address(_chain)
+        _bookToken.setTokenOwner(
+            this.tokenCount(), address(_book)
         );
-        _chain.init(_info);
-        _chains[_chainCount] = _chain;
+        _book.init(_info);
+        _books[_bookCount] = _book;
 
-        emit QuestChainCreated(_chainCount, address(_chain));
+        emit BookCreated(_bookCount, address(_book));
 
-        unchecked { ++_chainCount; }
+        unchecked { ++_bookCount; }
     }
 
-    function chainCount(
+    function bookCount(
     ) external view override returns (uint256) {
-        return _chainCount;
+        return _bookCount;
     }
 
-    function chainTemplate(
-    ) external view override returns (IQuestChain) {
-        return _chainTemplate;
+    function bookTemplate(
+    ) external view override returns (IBook) {
+        return _bookTemplate;
     }
 
     function shelfTemplate(
@@ -314,9 +314,9 @@ contract QuestChainFactory is IQuestChainFactory, ReentrancyGuard {
         return _collectionTemplate;
     }
 
-    function chainToken(
-    ) external view override returns (IQuestChainToken) {
-        return _chainToken;
+    function bookToken(
+    ) external view override returns (IBookToken) {
+        return _bookToken;
     }
 
     function admin() external view override returns (address) {

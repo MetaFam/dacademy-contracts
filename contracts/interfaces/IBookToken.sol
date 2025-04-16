@@ -8,10 +8,10 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC1155/extensions/IERC1155MetadataURI.sol";
 
-import "./IQuestChainFactory.sol";
+import "./IBookFactory.sol";
 
-interface IQuestChainToken is IERC1155MetadataURI {
-    function setTokenOwner(uint256 _tokenId, address _questChain) external;
+interface IBookToken is IERC1155MetadataURI {
+    function setTokenOwner(uint256 _tokenId, address _book) external;
 
     function setTokenURI(uint256 _tokenId, string memory _tokenURI) external;
 
@@ -19,7 +19,7 @@ interface IQuestChainToken is IERC1155MetadataURI {
 
     function burn(address _user, uint256 _tokenId) external;
 
-    function questChainFactory() external view returns (IQuestChainFactory);
+    function bookFactory() external view returns (IBookFactory);
 
     function tokenOwner(uint256 _tokenId) external view returns (address);
 }
